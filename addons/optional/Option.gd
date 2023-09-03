@@ -150,6 +150,19 @@ func map_or_else(default: Callable, f: Callable) -> Variant:
 		return default.call()
 	return f.call(_value)
 
+## This is the rust equivalent of [code]Option.and()[/code][br]
+## [param optb]: [code]Option<U>[/code][br]
+## Returns None if the option is None, otherwise returns [param optb]
+## Example:
+## [codeblock]
+## print( Option.Some(2) .and_opt(Option.None()) )      # Prints: None
+## print( Option.None() .and_opt(Option.Some("foo")) )  # Prints: None
+## print( Option.Some(2) .and_opt(Option.Some("foo")) ) # Prints: Some("foo")
+## print( Option.None() .and_opt(Option.None()) )       # Prints: None()
+## [/codeblock]
+func and_opt(optb: Option) -> Option:
+	return optb if _value != null and optb._value != null else Option.None()
+
 ## [code]f: func(T) -> Option<U>[/code][br]
 ## Returns None if the option is None, otherwise calls [code]f[/code] with the contained value and returns the result[br]
 ## Example:
@@ -167,6 +180,53 @@ func and_then(f: Callable) -> Option:
 	if _value == null:
 		return self
 	return f.call(_value)
+
+## This is the rust equivalent of [code]Option.or()[/code][br]
+## [param optb]: [code]Option<T>[/code][br]
+## Returns the option if it contains a value, ortherwise returns [param optb][br]
+## Example:
+## [codeblock]
+## print( Option.Some(2) .or_opt(Option.None()) )    # Prints: Some(2)
+## print( Option.None() .or_opt(Option.Some(100)) )  # Prints: Some(100)
+## print( Option.Some(2) .or_opt(Option.Some(100)) ) # Prints: Some(2)
+## print( Option.None() .or_opt(Option.None()) )     # Prints: None
+## [/codeblock]
+func or_opt(optb: Option) -> Option:
+	return self if _value != null else optb
+
+## [code]f: func() -> Option<T>[/code][br]
+## Returns the option if it contains a value, otherwise calls [code]f[/code] and returns the result[br]
+## Example:
+## [codeblock]
+## func nobody() -> Option:
+##     return Option.None()
+## 
+## func vikings() -> Option:
+##     return Option.Some("vikings")
+## 
+## print( Option.Some("barbarians") .or_else(vikings) ) # Prints: Some("barbarians")
+## print( Option.None .or_else(vikings) ) # Prints: Some("vikings")
+## print( Option.None .or_else(nobody) ) # Prints: None
+## [/codeblock]
+func or_else(f: Callable) -> Option:
+	if _value != null:
+		return self
+	return f.call()
+
+## This is the rust equivalent of [code]Option.xor()[/code][br]
+## [param optb]: [code]Option<T>[/code][br]
+## Returns Some if exactly one of [param self], [param optb] is Some, otherwise returns None[br]
+## Example:
+## [codeblock]
+## print( Option.Some(2) .xor_opt(Option.None()) )    # Prints: Some(2)
+## print( Option.None() .xor_opt(Option.Some(100)) )  # Prints: Some(100)
+## print( Option.Some(2) .xor_opt(Option.Some(100)) ) # Prints: None
+## print( Option.None() .xor_opt(Option.None()) )     # Prints: None
+## [/codeblock]
+func xor_opt(optb: Option) -> Option:
+	if (_value == null) == (optb._value == null):
+		return Option.None()
+	return self if _value != null else optb
 
 ## Takes the value out of this option, leaving a None in its place
 ## Example:
@@ -198,6 +258,14 @@ func flatten() -> Option:
 	if _value == null or !(_value is Option):
 		return self
 	return _value
+
+## predicate: func(T) -> bool
+func filter(predicate: Callable) -> Option:
+	if _value == null:
+		return self
+	if predicate.call(_value):
+		return self
+	return Option.None()
 
 ## Transforms the [Option] into a [class Result]
 func ok_or(err: Variant) -> Result:
