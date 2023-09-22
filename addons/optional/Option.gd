@@ -14,11 +14,12 @@ class_name Option extends RefCounted
 ##     print("Player doesn't exist!")
 ##     return
 ## var data = res.expect("Already checked if None or Some above") # Safest
-## var data = res.unwrap_or( some_default_value )
-## var data = res.get_value() # Generally, it's okay to use get_value() because we've already checked above
 ## var data = res.unwrap() # Crashes if res is None. Least safe, but quick for prototyping
+## var data = res.unwrap_or( 42 ) # Get from default value
+## var data = res.unwrap_or_else( some_complex_function ) # Get default value from function
+## var data = res.unwrap_unchecked() # It's okay to use it here because we've already checked above
 ## [/codeblock][br]
-## [Option] also comes with a safe way to index arrays[br]
+## [Option] also comes with a safe way to index arrays and dictionaries[br]
 ## [codeblock]
 ## var my_arr = [2, 4, 6]
 ## print( Option.arr_get(1))  # Prints "4"
@@ -106,7 +107,8 @@ func unwrap_or(default) -> Variant:
 ## var k: int = 10
 ## print( Option.Some(4) .unwrap_or_else(func():    return 2 * k) ) # Prints 4
 ## print( Option.None() .unwrap_or_else(func():    return 2 * k) ) # Prints 20
-## [/codeblock]
+## [/codeblock][br]
+## This is different from [method unwrap_or] in that the value is lazily evaluated, so it's good for methods that may take a long time to compute
 func unwrap_or_else(f: Callable) -> Variant:
 	if _value == null:
 		return f.call()
@@ -114,8 +116,8 @@ func unwrap_or_else(f: Callable) -> Variant:
 
 ## Similar to [method unwrap] where the contained value is returned[br]
 ## The difference is that there are NO checks to see if the value is null because you are assumed to have already checked if it's a None with [method is_none] or [method is_some][br]
-## This does mean that this fnction can return a null
-func get_value() -> Variant:
+## If used incorrectly, it can lead to unpredictable behavior
+func unwrap_unchecked() -> Variant:
 	return _value
 
 ## [code]f: func(T) -> U[/code][br]
@@ -124,6 +126,13 @@ func map(f: Callable) -> Option:
 	if _value == null:
 		return self
 	return Option.new( f.call(_value) )
+
+## [code]f: func(T) -> void[/code][br]
+## Maps an [code]Option<T>[/code] to [code]Option<U>[/code] by applying a function to the contained value (if [code]Some[/code])
+func map_mut(f: Callable) -> void:
+	if _value == null:
+		return
+	f.call(_value)
 
 ## [code]default: U[/code][br]
 ## [code]f: func(T) -> U[/code][br]
@@ -267,7 +276,7 @@ func filter(predicate: Callable) -> Option:
 		return self
 	return Option.None()
 
-## Transforms the [Option] into a [class Result]
+## Transforms the [Option] into a [Result]
 func ok_or(err: Variant) -> Result:
 	if _value == null:
 		return Result.Err(err)
@@ -296,3 +305,5 @@ static func dict_get(dict: Dictionary, key: Variant) -> Option:
 		return Option.new(null)
 	return Option.new(dict[key])
 
+static func get_node(parent: Node, path: NodePath) -> Option:
+	return Option.new(parent.get_node_or_null(path))

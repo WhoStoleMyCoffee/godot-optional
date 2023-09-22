@@ -11,7 +11,8 @@ config_version=5
 [application]
 
 config/name="GodotOptional"
-config/features=PackedStringArray("4.0", "GL Compatibility")
+config/tags=PackedStringArray("libs")
+config/features=PackedStringArray("4.1", "GL Compatibility")
 config/icon="res://icon.png"
 
 [editor_plugins]

@@ -7,19 +7,26 @@ class_name Result extends RefCounted
 ## Basic usage:[br]
 ## [codeblock]
 ## # By returning a Result, it's clear that this function can fail
-## func load_data_from_file(path: String) -> Result:
-##     return Result.Err(ERR_FILE_NOT_FOUND)
+## func my_function() -> Result:
+##     return Result.from_err(ERR_PRINTER_ON_FIRE)
 ##     return Result.Err("my error message")
 ##     return Result.Ok(data) # Success!
 ## # ...
-## var res: Result = load_data_from_file( ... )
+## var res: Result = my_function()
 ## if res.is_err():
-##     print(res)
+##     # stringify_error() is specific to this Godot addon
+##     print(res) .stringify_error()
 ##     return
 ## var data = res.expect("Already checked if Err or Ok above") # Safest
-## var data = res.unwrap_or( some_default_value )
-## var data = res.get_value() # Generally, it's okay to use get_value() because we've already checked above
 ## var data = res.unwrap() # Crashes if res is Err. Least safe, but quick for prototyping
+## var data = res.unwrap_or( 42 )
+## var data = res.unwrap_or_else( some_complex_function )
+## var data = res.unwrap_unchecked() # It's okay to use it here because we've already checked above
+## [/codeblock][br]
+## [Result] also comes with a safe way to open files
+## [codeblock]
+##  var res: Result = Result.open_file("res://file.txt", FileAccess.READ)
+##  var json_res: Result = Result.parse_json_file("res://data.json")
 ## [/codeblock]
 
 var _value: Variant
@@ -32,6 +39,11 @@ static func Ok(v) -> Result:
 ## Contains the error value
 static func Err(err) -> Result:
 	return Result.new(err, false)
+
+## Constructs a [Result] from the global [enum @GlobalScope.Error] enum[br]
+## [constant @GlobalScope.OK] will result in the Ok() variant, everything else will result in Err()
+static func from_err(err: int) -> Result:
+	return Result.new(err, err == OK)
 
 func _to_string() -> String:
 	if _is_ok:
@@ -108,6 +120,17 @@ func map_err(op: Callable) -> Result:
 		return self
 	return Result.new( op.call(_value), false )
 
+## Turns a [code]Result<_, Error>[/code] into a [code]Result<_, String>[/code][br]
+## This is the same as doing
+## [codeblock]
+## result.map_err(func(err: int):	return error_string(err))
+## [/codeblock]
+## See also [enum @GlobalScope.Error], [method @GlobalScope.error_string]
+func stringify_err() -> Result:
+	if _is_ok or typeof(_value) != TYPE_INT:	return self
+	_value = error_string(_value)
+	return self
+
 ## Returns the contained [code]Ok[/code] value[br]
 ## Stops the program if the value is an Err with a custom panic message provided by [code]msg[/code][br]
 ## Example:
@@ -161,6 +184,8 @@ func unwrap_or(default: Variant) -> Variant:
 
 ## [code]op: func(E) -> T[/code][br]
 ## Same as [method unwrap_or] but computes the default (if Err) from a function with the contained error as an argument
+## This is different from [method unwrap_or] in that the value is lazily evaluated, so it's good for methods that may take a long time to compute[br]
+## See also [method Option.unwrap_or_else]
 func unwrap_or_else(op: Callable) -> Variant:
 	if _is_ok:
 		return _value
@@ -169,11 +194,11 @@ func unwrap_or_else(op: Callable) -> Variant:
 ## Similar to [method unwrap] where the contained value is returned[br]
 ## The difference is that there are NO checks to see if the value is an Err because you are assumed to have already checked[br]
 ## If used incorrectly, it will lead to unpredictable behavior
-func get_value() -> Variant:
+func unwrap_unchecked() -> Variant:
 	return _value
 
 ## [code]op: func(T) -> Result<U, E>[/code][br]
-## Returns the Err if the result is Err. If Ok, calls [code]op[/code] with the contained value and returns the result[br]
+## Does nothing if the result is Err. If Ok, calls [code]op[/code] with the contained value and returns the result[br]
 func and_then(op: Callable) -> Result:
 	if !_is_ok:
 		return self
@@ -197,4 +222,28 @@ func or_else(op: Callable) -> Result:
 		return self
 	return op.call(_value)
 
+
+# ----------------------------------------------------------------
+# ** Util **
+# ----------------------------------------------------------------
+
+## Open a file safely and return the result[br]
+## Returns [code]Result<FileAccess, Error>[/code][br]
+## See also [FileAccess], [enum @GlobalScope.Error]
+static func open_file(path: String, flags: FileAccess.ModeFlags) -> Result:
+	var f = FileAccess.open(path, flags)
+	if f == null:
+		return Result.Err(FileAccess.get_open_error())
+	return Result.Ok(f)
+
+## Open and parse the given file as JSON[br]
+## [codeblock]
+## var data = Result.parse_json_file("path_to_file.json") # Ok(data)
+## var error = Result.parse_json_file("nonexistent_file.json") # Err(7) (File not found)
+## [/codeblock]
+static func parse_json_file(path: String) -> Result:
+	var json: JSON = JSON.new()
+	return Result.open_file(path, FileAccess.READ)\
+		.and_then(func(f: FileAccess):	return Result.from_err(json.parse(f.get_as_text())) )\
+		.map(func(__):	return json.data)
 
