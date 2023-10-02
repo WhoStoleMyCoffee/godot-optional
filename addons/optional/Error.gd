@@ -19,7 +19,7 @@ class_name Error extends RefCounted
 ## 
 ## # Used alongside a Result:
 ## Result.Err( Error.new(Error.MyCustomError) )
-## Result.open_file( ... ) .map_err(Error.new)
+## Result.open_file( ... ) .err_msg("Failed to open the specified file.")
 ## [/codeblock]
 ## [br]
 ## You can also define custom error types in the [Error] script

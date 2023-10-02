@@ -45,45 +45,65 @@ Basic usage:
 ```gdscript
 # By returning a Result, it's clear that this function can fail
 func my_function() -> Result:
-    return Result.from_err(ERR_PRINTER_ON_FIRE)
+    return Result.from_gderr(ERR_PRINTER_ON_FIRE)
+    # Also supports custom error types!
+    return Result.Err( Error.new(Error.MyCustomError).info("expected", "some_value") )
     return Result.Err("my error message")
     return Result.Ok(data) # Success!
 
 var res: Result = my_function()
+# Ways to handle results:
 if res.is_err():
-    # stringify_error() is specific to this Godot addon
-    print(res) .stringify_error()
+    res.stringify_error() # @GlobalScope.Error to String
+    # Custom errors can bear extra details. See the "Custom error types" section below
+    res.err_cause(...) .err_info(...) .err_msg(...)
     return
 
 var data = res.expect("Already checked if Err or Ok above") # Safest
 var data = res.unwrap() # Crashes if res is Err. Least safe, but quick for prototyping
-var data = res.unwrap_or( 42 )
+var data = res.unwrap_or( 42 ) # Defaults to 42
 var data = res.unwrap_or_else( some_complex_function )
 var data = res.unwrap_unchecked() # It's okay to use it here because we've already checked above
 ```
 
-Result also comes with a safe way to open files
+Result also comes with a safe way to open files and parse JSON
 
 ```gdscript
- var res: Result = Result.open_file("res://file.txt", FileAccess.READ)
- var json_res: Result = Result.parse_json_file("res://data.json")
+# "Error" refers to custom error types. Not to be confused with @GlobalScope.Error
+ var res: Result = Result.open_file("res://file.txt", FileAccess.READ) # Result<FileAccess, Error>
+ var json_res: Result = Result.parse_json_file("res://data.json") # Result<data, Error>
 ```
 
-## IterRange and IterRangef (experimental)
-`IterRange` and `IterRangef` both represent a range to be iterated on.
+## Custom error types
+Godot-optional introduces a custom `Error` class for custom error types. 
 
-`IterRangef` is the same as `IterRange` but iterates over floats rather than ints
-
-The idea is that GDScript's `range()` generates an array of numbers instaed of simply iterating
+The aim is to allow for errors to carry with them details about the exception, leading to better error handling. 
+It also acts as a place to have a centralized list of errors specific to your application, as Godot's global Error enum doesn't cover most cases. 
 
 Usage:
-
 ```gdscript
-# IterRange.new(start, end, step (optional))
-for i in IterRange.new(-1, 8, 2):
-    print(i) # Prints -1, 1, 3, 5, 7
+# Can be made from a Godot error, and with optional additional details
+var myerr = Error.new(ERR_PRINTER_ON_FIRE) .cause('Not enough ink!')
+    # Or with an additional message too
+    .msg("The printer gods demand input..")
 
-# Possibly favorable over range() for large ranges
-for i in IterRangef.new(0.0, 1000000.0, 0.2):
-    print(i)
+# Prints: "Printer on fire { "cause": "Not enough ink!", "msg": "The printer gods demand input.." }"
+print(myerr)
+
+# You can even nest them!
+Error.from_gderr(ERR_TIMEOUT) .cause( Error.new(Error.Other).msg("Oh no!") )
+
+# Used alongside a Result:
+Result.Err( Error.new(Error.MyCustomError) )
+Result.open_file( ... ) .err_msg("Failed to open the specified file.")
+```
+
+You can also define custom error types in the Error script
+```gdscript
+# res://addons/optional/Error.gd
+enum {
+    Other,
+    # Define custom errors here ...
+    MyCustomError,
+}
 ```
