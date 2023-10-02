@@ -8,7 +8,7 @@ class_name Result extends RefCounted
 ## [codeblock]
 ## # By returning a Result, it's clear that this function can fail
 ## func my_function() -> Result:
-##     return Result.from_err(ERR_PRINTER_ON_FIRE)
+##     return Result.from_gderr(ERR_PRINTER_ON_FIRE)
 ##     return Result.Err("my error message")
 ##     return Result.Ok(data) # Success!
 ## # ...
@@ -42,7 +42,7 @@ static func Err(err) -> Result:
 
 ## Constructs a [Result] from the global [enum @GlobalScope.Error] enum[br]
 ## [constant @GlobalScope.OK] will result in the Ok() variant, everything else will result in Err()
-static func from_err(err: int) -> Result:
+static func from_gderr(err: int) -> Result:
 	return Result.new(err, err == OK)
 
 func _to_string() -> String:
@@ -120,8 +120,8 @@ func map_err(op: Callable) -> Result:
 		return self
 	return Result.new( op.call(_value), false )
 
-## Turns a [code]Result<_, Error>[/code] into a [code]Result<_, String>[/code][br]
-## This is the same as doing
+## Turns a [code]Result<_, @GlobalScope.Error>[/code] into a [code]Result<_, String>[/code][br]
+## This is similar to doing the following but safer
 ## [codeblock]
 ## result.map_err(func(err: int):	return error_string(err))
 ## [/codeblock]
@@ -129,6 +129,52 @@ func map_err(op: Callable) -> Result:
 func stringify_err() -> Result:
 	if _is_ok or typeof(_value) != TYPE_INT:	return self
 	_value = error_string(_value)
+	return self
+
+## Converts this [code]Err([/code][enum @GlobalScope.Error][code])[/code] into [code]Err([/code][Error][code])[/code][br]
+## This is similar to doing the following but safer
+## [codeblock]
+## result.map_err(Error.new)
+## [/codeblock]
+func toError() -> Result:
+	if _is_ok or typeof(_value) != TYPE_INT:	return self
+	_value = Error.new(_value)
+	return self
+
+## Calls [method Error.msg] if this is an [code]Err([/code][Error][code])[/code][br]
+## [codeblock]
+## # Example usage
+## result.toError() .msg("Some example message") .cause(something_else)
+## 
+## # This is similar to doing
+## result.map_err(func(err: Error): return err.msg(message))
+## [/codeblock]
+## See also [method toError], [method err_cause], [method err_info], [method Error.msg]
+func err_msg(message: String) -> Result:
+	if _is_ok or !(_value is Error):	return self
+	_value.details.msg = message # Error.msg(message) expanded (for performance)
+	return self
+
+## Calls [method Error.cause] if this is an [code]Err([/code][Error][code])[/code][br]
+## This is similar to doing
+## [codeblock]
+## result.map_err(func(err: Error): return err.cause(cause))
+## [/codeblock]
+## See also [method toError], [method err_msg], [method err_info], [method Error.cause]
+func err_cause(cause: Variant) -> Result:
+	if _is_ok or !(_value is Error):	return self
+	_value.details.cause = cause # Error.cause(cause) expanded (for performance)
+	return self
+
+## Calls [method Error.info] if this is an [code]Err([/code][Error][code])[/code][br]
+## This is similar to doing
+## [codeblock]
+## result.map_err(func(err: Error): return err.info(key, value))
+## [/codeblock]
+## See also [method toError], [method err_msg], [method err_cause], [method Error.info]
+func err_info(key: String, value: Variant) -> Result:
+	if _is_ok or !(_value is Error):	return self
+	_value.details[key] = value # Error.info(key, value) expanded (for performance)
 	return self
 
 ## Returns the contained [code]Ok[/code] value[br]
@@ -229,21 +275,29 @@ func or_else(op: Callable) -> Result:
 
 ## Open a file safely and return the result[br]
 ## Returns [code]Result<FileAccess, Error>[/code][br]
-## See also [FileAccess], [enum @GlobalScope.Error]
+## See also [FileAccess], [Error]
 static func open_file(path: String, flags: FileAccess.ModeFlags) -> Result:
 	var f = FileAccess.open(path, flags)
 	if f == null:
-		return Result.Err(FileAccess.get_open_error())
+		return Result.Err( Error.new(FileAccess.get_open_error()) .info('path', path) )
 	return Result.Ok(f)
 
 ## Open and parse the given file as JSON[br]
 ## [codeblock]
 ## var data = Result.parse_json_file("path_to_file.json") # Ok(data)
-## var error = Result.parse_json_file("nonexistent_file.json") # Err(7) (File not found)
+## # Err(File not found { "path" : "nonexistent_file.json" })
+## var error = Result.parse_json_file("nonexistent_file.json")
 ## [/codeblock]
+## See also [method open_file], [Error]
 static func parse_json_file(path: String) -> Result:
 	var json: JSON = JSON.new()
 	return Result.open_file(path, FileAccess.READ)\
-		.and_then(func(f: FileAccess):	return Result.from_err(json.parse(f.get_as_text())) )\
+		.and_then(func(f: FileAccess):
+			# Yo why json.get_error_message() and get_error_line() always empty?
+			# Anyways, it's here just in case
+			return Result.from_gderr( json.parse(f.get_as_text()) ) .toError()\
+				.err_msg(json.get_error_message())\
+				.err_info('line', json.get_error_line())
+			)\
 		.map(func(__):	return json.data)
 
