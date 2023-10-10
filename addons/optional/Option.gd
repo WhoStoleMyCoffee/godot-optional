@@ -28,6 +28,8 @@ class_name Option extends RefCounted
 
 var _value: Variant = null
 
+# TODO signal value_changed
+
 static func Some(v) -> Option:
 	assert(v != null, "Cannot assign null to an Some")
 	return Option.new(v)
@@ -86,7 +88,7 @@ func unwrap() -> Variant:
 	if _value == null:
 		push_warning("Unresolved unwrap(). Please handle options in release builds")
 		OS.alert("Called Option::unwrap() on a None value", 'Option unwrap error')
-		OS.crash('')
+		OS.kill(OS.get_process_id())
 		return
 	return _value
 
@@ -128,11 +130,12 @@ func map(f: Callable) -> Option:
 	return Option.new( f.call(_value) )
 
 ## [code]f: func(T) -> void[/code][br]
-## Maps an [code]Option<T>[/code] to [code]Option<U>[/code] by applying a function to the contained value (if [code]Some[/code])
-func map_mut(f: Callable) -> void:
+## Maps an [code]Option<T>[/code] to [code]Option<U>[/code] by applying a function to the contained value mutably (if [code]Some[/code])
+func map_mut(f: Callable) -> Option:
 	if _value == null:
-		return
+		return self
 	f.call(_value)
+	return self
 
 ## [code]default: U[/code][br]
 ## [code]f: func(T) -> U[/code][br]
@@ -268,11 +271,21 @@ func flatten() -> Option:
 		return self
 	return _value
 
-## predicate: func(T) -> bool
+## [param predicate]: [code]func(T) -> bool[/code]
 func filter(predicate: Callable) -> Option:
 	if _value == null:
 		return self
 	if predicate.call(_value):
+		return self
+	return Option.None()
+
+## Ensures that the type of the contained value is [param type][br]
+## This is similar to doing
+## [codeblock]
+## option.filter(func(v):	return typeof(v) == type)
+## [/codeblock]
+func typed(type: Variant.Type) -> Option:
+	if typeof(_value) == type:
 		return self
 	return Option.None()
 

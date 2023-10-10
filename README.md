@@ -56,7 +56,8 @@ var res: Result = my_function()
 if res.is_err():
     res.stringify_error() # @GlobalScope.Error to String
     # Custom errors can bear extra details. See the "Custom error types" section below
-    res.err_cause(...) .err_info(...) .err_msg(...)
+    res.err_cause(...) .err_info(...) .err_msg(...)\
+		.report()
     return
 
 var data = res.expect("Already checked if Err or Ok above") # Safest
@@ -89,13 +90,14 @@ var myerr = Error.new(ERR_PRINTER_ON_FIRE) .cause('Not enough ink!')
 
 # Prints: "Printer on fire { "cause": "Not enough ink!", "msg": "The printer gods demand input.." }"
 print(myerr)
+myerr.report()
 
 # You can even nest them!
 Error.from_gderr(ERR_TIMEOUT) .cause( Error.new(Error.Other).msg("Oh no!") )
 
 # Used alongside a Result:
 Result.Err( Error.new(Error.MyCustomError) )
-Result.open_file( ... ) .err_msg("Failed to open the specified file.")
+Result.open_file( ... ) .err_msg("Failed to open the specified file")
 ```
 
 You can also define custom error types in the Error script

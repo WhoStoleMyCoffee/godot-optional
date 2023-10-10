@@ -44,17 +44,15 @@ enum {
 var type: int = Other
 ## Optional additional details about this error
 var details: Dictionary = {}
+var message: String = ''
 
 ## Create a new [Error] of type [param t], with (optional) additional [param _details][br]
 func _init(t: int, _details: Dictionary = {}):
 	type = t
 	details = _details
 
-## Shorthand for[br]
-## [code]Error.new(some_type, { 'msg' : [/code][param msg][code] })[/code][br]
-## Returns self
-func msg(message: String) -> Error:
-	details.msg = message
+func msg(message_: String) -> Error:
+	message = message_
 	return self
 
 ## Shorthand for[br]
@@ -75,14 +73,19 @@ func info(key: String, value: Variant) -> Error:
 func is_gderror() -> bool:
 	return type <= ERR_PRINTER_ON_FIRE
 
+## Pushes this error to the built-in debugger and OS terminal
+func report() -> void:
+	push_error(str(self))
+
 # Aa my eyes
 func _to_string() -> String:
 	# Details dictionary
 	var infostr: String = '' if details.is_empty() else ' ' + str(details)
+	
 	# Godot error
 	if type <= ERR_PRINTER_ON_FIRE:
-		return error_string(type) + infostr
+		return message + error_string(type) + infostr
 	# Custom error
 	var s = get_script().get_script_constant_map() .find_key(type)
-	return (s if s != null else '(Invalid error type: %s)' % type) + infostr
+	return message + (s if s != null else '(Invalid error type: %s)' % type) + infostr
 

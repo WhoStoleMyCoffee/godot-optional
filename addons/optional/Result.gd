@@ -45,6 +45,10 @@ static func Err(err) -> Result:
 static func from_gderr(err: int) -> Result:
 	return Result.new(err, err == OK)
 
+static func newError(err: int) -> Result:
+	if err == OK:	return Result.new(OK, true)
+	return Result.new(Error.new(err), false)
+
 func _to_string() -> String:
 	if _is_ok:
 		return 'Ok(%s)' % _value
@@ -89,6 +93,13 @@ func map(op: Callable) -> Result:
 		return Result.new( op.call(_value), true )
 	return self
 
+## [code]f: func(T) -> void[/code][br]
+## Maps a [code]Result<T, E>[/code] to [code]Result<U, E>[/code] by applying a function to the contained value mutably (if [code]Ok[/code])
+func map_mut(f: Callable) -> Result:
+	if !_is_ok:	return self
+	f.call(_value)
+	return self
+
 ## [code]default: U[/code][br]
 ## [code]f: func(T) -> U[/code][br]
 ## Returns the provided default if Err, or applies a function to the contained value if Ok.
@@ -120,6 +131,13 @@ func map_err(op: Callable) -> Result:
 		return self
 	return Result.new( op.call(_value), false )
 
+## [code]f: func(E) -> void[/code][br]
+## Maps a [code]Result<T, E>[/code] to [code]Result<T, F>[/code] by applying a function to the contained error mutably (if [code]Err[/code])
+func map_err_mut(f: Callable) -> Result:
+	if _is_ok:	return self
+	f.call(_value)
+	return self
+
 ## Turns a [code]Result<_, @GlobalScope.Error>[/code] into a [code]Result<_, String>[/code][br]
 ## This is similar to doing the following but safer
 ## [codeblock]
@@ -141,18 +159,9 @@ func toError() -> Result:
 	_value = Error.new(_value)
 	return self
 
-## Calls [method Error.msg] if this is an [code]Err([/code][Error][code])[/code][br]
-## [codeblock]
-## # Example usage
-## result.toError() .msg("Some example message") .cause(something_else)
-## 
-## # This is similar to doing
-## result.map_err(func(err: Error): return err.msg(message))
-## [/codeblock]
-## See also [method toError], [method err_cause], [method err_info], [method Error.msg]
 func err_msg(message: String) -> Result:
 	if _is_ok or !(_value is Error):	return self
-	_value.details.msg = message # Error.msg(message) expanded (for performance)
+	_value.message = message # Error.msg(message) expanded
 	return self
 
 ## Calls [method Error.cause] if this is an [code]Err([/code][Error][code])[/code][br]
@@ -163,7 +172,7 @@ func err_msg(message: String) -> Result:
 ## See also [method toError], [method err_msg], [method err_info], [method Error.cause]
 func err_cause(cause: Variant) -> Result:
 	if _is_ok or !(_value is Error):	return self
-	_value.details.cause = cause # Error.cause(cause) expanded (for performance)
+	_value.details.cause = cause # Error.cause(cause) expanded
 	return self
 
 ## Calls [method Error.info] if this is an [code]Err([/code][Error][code])[/code][br]
@@ -174,7 +183,7 @@ func err_cause(cause: Variant) -> Result:
 ## See also [method toError], [method err_msg], [method err_cause], [method Error.info]
 func err_info(key: String, value: Variant) -> Result:
 	if _is_ok or !(_value is Error):	return self
-	_value.details[key] = value # Error.info(key, value) expanded (for performance)
+	_value.details[key] = value # Error.info(key, value) expanded
 	return self
 
 ## Returns the contained [code]Ok[/code] value[br]
@@ -210,8 +219,8 @@ func expect_err(msg: String) -> Variant:
 func unwrap() -> Variant:
 	if !_is_ok:
 		push_warning("Unresolved unwrap(). Please handle results in release builds")
-		OS.alert("Called Result::unwrap() on an Err. value: %s" % _value, 'Result unwrap error')
-		OS.crash('')
+		OS.alert("Called Result::unwrap() on an Err. value:\n %s" % _value, 'Result unwrap error')
+		OS.kill(OS.get_process_id())
 		return
 	return _value
 
@@ -219,8 +228,8 @@ func unwrap() -> Variant:
 func unwrap_err() -> Variant:
 	if _is_ok:
 		push_warning("Unresolved unwrap_err(). Please handle results in release builds")
-		OS.alert("Called Result::unwrap_err() on an Ok. value: %s" % _value, 'Result unwrap error')
-		OS.crash('')
+		OS.alert("Called Result::unwrap_err() on an Ok. value:\n %s" % _value, 'Result unwrap error')
+		OS.kill(OS.get_process_id())
 		return
 	return _value
 
@@ -242,6 +251,12 @@ func unwrap_or_else(op: Callable) -> Variant:
 ## If used incorrectly, it will lead to unpredictable behavior
 func unwrap_unchecked() -> Variant:
 	return _value
+
+## Pushes this error to the built-in debugger and OS terminal (if this result is an Err(_))
+func report() -> Result:
+	if _is_ok:	return self
+	push_error(str(_value))
+	return self
 
 ## [code]op: func(T) -> Result<U, E>[/code][br]
 ## Does nothing if the result is Err. If Ok, calls [code]op[/code] with the contained value and returns the result[br]
