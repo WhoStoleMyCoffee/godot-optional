@@ -38,12 +38,14 @@ class_name Error extends RefCounted
 enum {
 	Other = ERR_PRINTER_ON_FIRE+1, ## Other error type. Below ERR_PRINTER_ON_FIRE is reserved for [enum @GlobalScope.Error]
 	# Define custom errors here ...
+	ExampleError, ## Error used in the examples. See res://addons/optional/examples/
 }
 
 ## The [Error]'s type. This can be a custom error type defined in the [Error] script or a [enum @GlobalScope.Error]
 var type: int = Other
 ## Optional additional details about this error
 var details: Dictionary = {}
+## Additional message to show when converting to string or printing
 var message: String = ''
 
 ## Create a new [Error] of type [param t], with (optional) additional [param _details][br]
@@ -51,6 +53,7 @@ func _init(t: int, _details: Dictionary = {}):
 	type = t
 	details = _details
 
+## Set the message to show when converting to string or printing
 func msg(message_: String) -> Error:
 	message = message_
 	return self

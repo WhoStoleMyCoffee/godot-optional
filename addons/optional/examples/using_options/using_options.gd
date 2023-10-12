@@ -7,6 +7,9 @@ This example shows you how to effectively use Options
 Note:
 	If you're in a context where performance matters more than anything,
 	you may want to opt for conventional error handling
+
+Note:
+	I highly recommend reading through the F1 help for Option
 """
 
 
@@ -47,6 +50,8 @@ func weapon_durability():
 			print_console( str(old_weapon.id) + ' broke!' )
 			)
 	print_console('weapon = ' + str(weapon))
+	# If you want to do further handling with the broken weapon:
+	# var old_weapon: Option = weapon. (...) .take()
 
 
 """
@@ -74,8 +79,6 @@ func array_get():
 
 func print_console(string: String):
 	$VSplitContainer/RichTextLabel.text += '\n' + string
-
-
 
 func _on_button_pressed(method: String):
 	print_console('\nRunning demo "%s"' % method)

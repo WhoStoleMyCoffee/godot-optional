@@ -45,6 +45,9 @@ static func Err(err) -> Result:
 static func from_gderr(err: int) -> Result:
 	return Result.new(err, err == OK)
 
+## Constructs an [code]Err([/code] [Error] [code])[/code] with the error code [param err][br]
+## Both [enum @GlobalScope.Error] and custom [Error] codes are allowed[br]
+## [constant @GlobalScope.OK] will result in the Ok() variant, everything else will result in Err()
 static func newError(err: int) -> Result:
 	if err == OK:	return Result.new(OK, true)
 	return Result.new(Error.new(err), false)
@@ -95,6 +98,7 @@ func map(op: Callable) -> Result:
 
 ## [code]f: func(T) -> void[/code][br]
 ## Maps a [code]Result<T, E>[/code] to [code]Result<U, E>[/code] by applying a function to the contained value mutably (if [code]Ok[/code])
+## Also good if you simply want to execute a block of code if [code]Ok[/code]
 func map_mut(f: Callable) -> Result:
 	if !_is_ok:	return self
 	f.call(_value)
@@ -133,6 +137,7 @@ func map_err(op: Callable) -> Result:
 
 ## [code]f: func(E) -> void[/code][br]
 ## Maps a [code]Result<T, E>[/code] to [code]Result<T, F>[/code] by applying a function to the contained error mutably (if [code]Err[/code])
+## Also good if you simply want to execute a block of code if [code]Err[/code]
 func map_err_mut(f: Callable) -> Result:
 	if _is_ok:	return self
 	f.call(_value)
@@ -159,6 +164,12 @@ func toError() -> Result:
 	_value = Error.new(_value)
 	return self
 
+## Set the message to show when converting to string or printing if this is an [code]Err[/code]
+## This is similar to doing
+## [codeblock]
+## result.map_err(func(err: Error): return err.msg(message))
+## [/codeblock]
+## See also [method toError], [method err_cause], [method err_info], [method Error.msg]
 func err_msg(message: String) -> Result:
 	if _is_ok or !(_value is Error):	return self
 	_value.message = message # Error.msg(message) expanded

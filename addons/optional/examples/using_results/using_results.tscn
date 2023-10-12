@@ -1,0 +1,51 @@
+[gd_scene load_steps=2 format=3 uid="uid://dwybndwyuh757"]
+
+[ext_resource type="Script" path="res://addons/optional/examples/using_results/using_results.gd" id="1_5iukm"]
+
+[node name="UsingResults" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_5iukm")
+
+[node name="VSplitContainer" type="VSplitContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+split_offset = 300
+
+[node name="GridContainer" type="GridContainer" parent="VSplitContainer"]
+layout_mode = 2
+columns = 5
+
+[node name="Handling" type="Button" parent="VSplitContainer/GridContainer"]
+layout_mode = 2
+text = "handling"
+
+[node name="FileOpen" type="Button" parent="VSplitContainer/GridContainer"]
+layout_mode = 2
+text = "file_open"
+
+[node name="CustomError" type="Button" parent="VSplitContainer/GridContainer"]
+layout_mode = 2
+text = "custom_errors"
+
+[node name="RichTextLabel" type="RichTextLabel" parent="VSplitContainer"]
+layout_mode = 2
+bbcode_enabled = true
+text = "[color=gray]Output console[/color]"
+scroll_following = true
+
+[connection signal="pressed" from="VSplitContainer/GridContainer/Handling" to="." method="_on_button_pressed" binds= ["handling"]]
+[connection signal="pressed" from="VSplitContainer/GridContainer/FileOpen" to="." method="_on_button_pressed" binds= ["file_open"]]
+[connection signal="pressed" from="VSplitContainer/GridContainer/CustomError" to="." method="_on_button_pressed" binds= ["custom_errors"]]

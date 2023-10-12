@@ -28,7 +28,7 @@ split_offset = 300
 layout_mode = 2
 columns = 5
 
-[node name="Intro" type="Button" parent="VSplitContainer/GridContainer"]
+[node name="WeaponDur" type="Button" parent="VSplitContainer/GridContainer"]
 layout_mode = 2
 text = "weapon_durability"
 
@@ -42,5 +42,5 @@ bbcode_enabled = true
 text = "[color=gray]Output console[/color]"
 scroll_following = true
 
-[connection signal="pressed" from="VSplitContainer/GridContainer/Intro" to="." method="_on_button_pressed" binds= ["weapon_durability"]]
+[connection signal="pressed" from="VSplitContainer/GridContainer/WeaponDur" to="." method="_on_button_pressed" binds= ["weapon_durability"]]
 [connection signal="pressed" from="VSplitContainer/GridContainer/ArrayGet" to="." method="_on_button_pressed" binds= ["array_get"]]

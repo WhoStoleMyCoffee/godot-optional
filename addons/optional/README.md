@@ -32,7 +32,6 @@ var my_arr = [2, 4, 6]
 print( Option.arr_get(1))  # Prints "4"
 print( Option.arr_get(4))  # Prints "None" because index 4 is out of bounds
 ```
-![](screenshots/example_attack.png)
 
 
 ## Result
@@ -76,7 +75,6 @@ Result also comes with a safe way to open files and parse JSON
  var res: Result = Result.open_file("res://file.txt", FileAccess.READ) # Result<FileAccess, Error>
  var json_res: Result = Result.parse_json_file("res://data.json") # Result<data, Error>
 ```
-![](screenshots/example_file.png)
 
 ## Custom error types
 Godot-optional introduces a custom `Error` class for custom error types. 
@@ -112,4 +110,3 @@ enum {
     MyCustomError,
 }
 ```
-![](screenshots/example_custom_errors.png)
