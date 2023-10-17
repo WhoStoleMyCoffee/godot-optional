@@ -40,7 +40,7 @@ This example shows the ways to use Result to safely open and parse files
 """
 func file_open():
 	# Should fail because the file doesn't exist
-	var res1: Result = Result.open_file("res://addons/optional/examples/nonexistent_file.json", FileAccess.READ)\
+	var res1: Result = Result.open_file("res://nonexistent_file.json", FileAccess.READ)\
 		.err_msg("Failed to load file: ")
 	print_console('Result 1 (should fail) = ' + str(res1))
 	
@@ -69,7 +69,7 @@ func custom_errors():
 		.err_cause( error_string(ERR_FILE_CANT_WRITE) )\
 		.err_msg("Testing error reporting: ")\
 		.report()
-	# Result::err_info(), err_cause(), err_msg(), and report() are actually
+	# Result::err_info(), err_cause(), err_as_cause(), err_msg(), and report() are actually
 	# wrappers of Error methods
 
 

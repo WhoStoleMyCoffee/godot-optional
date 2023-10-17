@@ -47,7 +47,8 @@ static func from_gderr(err: int) -> Result:
 
 ## Constructs an [code]Err([/code] [Error] [code])[/code] with the error code [param err][br]
 ## Both [enum @GlobalScope.Error] and custom [Error] codes are allowed[br]
-## [constant @GlobalScope.OK] will result in the Ok() variant, everything else will result in Err()
+## [constant @GlobalScope.OK] will result in the Ok() variant, everything else will result in Err()[br]
+## Also see [method toError]
 static func newError(err: int) -> Result:
 	if err == OK:	return Result.new(OK, true)
 	return Result.new(Error.new(err), false)
@@ -159,6 +160,7 @@ func stringify_err() -> Result:
 ## [codeblock]
 ## result.map_err(Error.new)
 ## [/codeblock]
+## Also see [method newError]
 func toError() -> Result:
 	if _is_ok or typeof(_value) != TYPE_INT:	return self
 	_value = Error.new(_value)
@@ -184,6 +186,23 @@ func err_msg(message: String) -> Result:
 func err_cause(cause: Variant) -> Result:
 	if _is_ok or !(_value is Error):	return self
 	_value.details.cause = cause # Error.cause(cause) expanded
+	return self
+
+## Calls [method Error.as_cause_mut] if this is an [code]Err([/code][Error][code])[/code][br]
+## This is similar to doing
+## [codeblock]
+## result.map_err_mut(func(err: Error):    err.as_cause_mut(type))
+## [/codeblock]
+## See also [method err_cause], [method Error.cause], [method Error.as_cause]
+func err_as_cause(err: int) -> Result:
+	if _is_ok or !(_value is Error):	return self
+	# Error::as_cause_mut() expanded
+	var inner: Error = Error.new(_value.type, _value.details)
+	inner.message = _value.message
+	
+	_value.type = err
+	_value.details = { 'cause' : inner }
+	_value.message = ''
 	return self
 
 ## Calls [method Error.info] if this is an [code]Err([/code][Error][code])[/code][br]

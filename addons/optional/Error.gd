@@ -65,6 +65,26 @@ func cause(cause: Variant) -> Error:
 	details.cause = cause
 	return self
 
+## Puts [code]self[/code] as the cause of a new [code]Error([/code][param t][code])[/code] [br]
+## This is similar to doing
+## [codeblock]
+## Error.new(t) .cause(error)
+## [/codeblock]
+func as_cause(t: int) -> Error:
+	return Error.new(t).cause(self)
+
+## Puts [code]self[/code] as the cause of [code]Error([/code][param t][code])[/code] by modifying [code]self[/code][br]
+## The difference between this and [method as_cause] is [method as_cause_mut] modifies [code]self[/code] instead of 
+## creating a new one and potentially having 2 [Error]s floating around in your code
+func as_cause_mut(t: int) -> Error:
+	var inner: Error = Error.new(type, details)
+	inner.message = message
+	
+	type = t
+	details = { 'cause' : inner }
+	message = ''
+	return self
+
 ## Adds additional info to this error. Shorthand for[br]
 ## [code]Error.new(some_type, { [/code][param key][code] : [/code][param value][code] })[/code][br]
 ## Returns self
