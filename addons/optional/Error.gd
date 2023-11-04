@@ -104,11 +104,12 @@ func report() -> void:
 func _to_string() -> String:
 	# Details dictionary
 	var infostr: String = '' if details.is_empty() else ' ' + str(details)
+	var msgstr: String = '' if message.is_empty() else message + ': '
 	
 	# Godot error
 	if type <= ERR_PRINTER_ON_FIRE:
-		return message + error_string(type) + infostr
+		return msgstr + error_string(type) + infostr
 	# Custom error
 	var s = get_script().get_script_constant_map() .find_key(type)
-	return message + (s if s != null else '(Invalid error type: %s)' % type) + infostr
+	return msgstr + (s if s != null else '(Invalid error type: %s)' % type) + infostr
 

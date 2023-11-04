@@ -9,7 +9,8 @@ Note:
 	you may want to opt for conventional error handling
 
 Note:
-	I highly recommend reading through the F1 help for Result and Error
+	I highly recommend reading through the generated documentation (F1 help)
+	for Result and Error
 """
 
 """

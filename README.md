@@ -113,3 +113,35 @@ enum {
 }
 ```
 ![](screenshots/example_custom_errors.png)
+
+## Enum Structs
+Godot-optional now supports enum structs!
+
+Usage:
+
+```gdscript
+# Declare enum
+static var AnimalState: EnumStruct = EnumStruct.new()\
+    .add(&"Alive", { "is_hungry" : false })\
+    .add(&"Dead") # A dead animal can't be hungry
+
+# There are a couple ways to get an EnumStruct variant:
+# Notice how cat_state is a Dictionary
+var cat_state: Dictionary = AnimalState.Alive
+cat_state.is_hungry = true
+# or
+var cat_state: Dictionary = AnimalState.variant(&"Alive", { "is_hungry" : true })
+
+print(cat_state) # A bit ugly
+print( EnumStruct.stringify(cat_state) ) # Prettier
+```
+
+The above code is the same as doing the following in Rust:
+```rust
+enum AnimalState {
+    Alive{ is_hungry: bool },
+    Dead,
+}
+
+let cat_state: AnimalState = AnimalState::Alive{ is_hungry: true };
+```
