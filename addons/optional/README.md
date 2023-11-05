@@ -32,6 +32,7 @@ var my_arr = [2, 4, 6]
 print( Option.arr_get(1))  # Prints "4"
 print( Option.arr_get(4))  # Prints "None" because index 4 is out of bounds
 ```
+![](screenshots/example_attack.png)
 
 
 ## Result
@@ -75,6 +76,7 @@ Result also comes with a safe way to open files and parse JSON
  var res: Result = Result.open_file("res://file.txt", FileAccess.READ) # Result<FileAccess, Error>
  var json_res: Result = Result.parse_json_file("res://data.json") # Result<data, Error>
 ```
+![](screenshots/example_file.png)
 
 ## Custom error types
 Godot-optional introduces a custom `Error` class for custom error types. 
@@ -109,4 +111,38 @@ enum {
     # Define custom errors here ...
     MyCustomError,
 }
+```
+![](screenshots/example_custom_errors.png)
+
+## Enum Structs
+Godot-optional now supports enum structs!
+
+Usage:
+
+```gdscript
+# Declare enum
+static var AnimalState: EnumStruct = EnumStruct.new()\
+    .add(&"Alive", { "is_hungry" : false })\
+    .add(&"Dead") # A dead animal can't be hungry
+
+# There are a couple ways to get an EnumStruct variant:
+var cat_state: EnumVariant = AnimalState.Alive
+cat_state.is_hungry = true
+# or
+var cat_state: EnumVariant = AnimalState.variant(&"Alive", { "is_hungry" : true })
+
+print(cat_state) # Prints: Alive { "is_hungry" : true }
+```
+Notice how `EnumStruct`s and `EnumVariant`s can both be treated like normal objects, but with the user declared properties.
+
+`Note`: There are also `EnumDict`s which use Dictionaries as variants instead of `EnumVariant`
+
+The above code is the same as doing the following in Rust:
+```rust
+enum AnimalState {
+    Alive{ is_hungry: bool },
+    Dead,
+}
+
+let cat_state: AnimalState = AnimalState::Alive{ is_hungry: true };
 ```

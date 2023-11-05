@@ -126,15 +126,16 @@ static var AnimalState: EnumStruct = EnumStruct.new()\
     .add(&"Dead") # A dead animal can't be hungry
 
 # There are a couple ways to get an EnumStruct variant:
-# Notice how cat_state is a Dictionary
-var cat_state: Dictionary = AnimalState.Alive
+var cat_state: EnumVariant = AnimalState.Alive
 cat_state.is_hungry = true
 # or
-var cat_state: Dictionary = AnimalState.variant(&"Alive", { "is_hungry" : true })
+var cat_state: EnumVariant = AnimalState.variant(&"Alive", { "is_hungry" : true })
 
-print(cat_state) # A bit ugly
-print( EnumStruct.stringify(cat_state) ) # Prettier
+print(cat_state) # Prints: Alive { "is_hungry" : true }
 ```
+Notice how `EnumStruct`s and `EnumVariant`s can both be treated like normal objects, but with the user declared properties.
+
+`Note`: There are also `EnumDict`s which use Dictionaries as variants instead of `EnumVariant`
 
 The above code is the same as doing the following in Rust:
 ```rust
