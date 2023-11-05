@@ -1,0 +1,46 @@
+[gd_scene load_steps=2 format=3 uid="uid://bsninbfyf7pfn"]
+
+[ext_resource type="Script" path="res://addons/optional/examples/using_enumstructs/using_enumstructs.gd" id="1_elgb0"]
+
+[node name="UsingEnumStructs" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_elgb0")
+
+[node name="VSplitContainer" type="VSplitContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+split_offset = 300
+
+[node name="GridContainer" type="GridContainer" parent="VSplitContainer"]
+layout_mode = 2
+columns = 5
+
+[node name="Process" type="Button" parent="VSplitContainer/GridContainer"]
+layout_mode = 2
+text = "example_process"
+
+[node name="PetState" type="Button" parent="VSplitContainer/GridContainer"]
+layout_mode = 2
+text = "example_pet_state (using EnumDict)"
+
+[node name="RichTextLabel" type="RichTextLabel" parent="VSplitContainer"]
+layout_mode = 2
+bbcode_enabled = true
+text = "[color=gray]Output console[/color]"
+scroll_following = true
+
+[connection signal="pressed" from="VSplitContainer/GridContainer/Process" to="." method="_on_button_pressed" binds= ["example_process"]]
+[connection signal="pressed" from="VSplitContainer/GridContainer/PetState" to="." method="_on_button_pressed" binds= ["example_pet_state"]]
