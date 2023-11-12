@@ -1,26 +1,26 @@
 extends Control
 
 """
-* USING ENUMSTRUCTS *
-This example shows you how to effectively use EnumStructs, EnumVariants, and EnumDicts
-I recommend using EnumStruct instead of EnumDict if in doubt on which to use
+* USING ENUMS *
+This example shows you how to effectively use Enums, EnumVars, and EnumDicts
+I recommend using Enum instead of EnumDict if in doubt on which to use
 
 Note:
-	Normally, you'd want EnumStruct and EnumDict declarations to be static vars
+	Normally, you'd want Enum (or EnumDict) declarations to be static vars
 	Here, they're not because we can't define statics inside functions
 
-I highly recommend reading through the F1 help for EnumStruct
+I highly recommend reading through the F1 help for Enum
 """
 
 """
-This example demonstrates the usage of EnumStructs and EnumVariants
+This example demonstrates the usage of Enums and EnumVars
 """
 func example_process():
-	var ProcessStates: EnumStruct = EnumStruct.new()\
+	var ProcessStates: Enum = Enum.new()\
 		.add(&"Processing", { 'percentage': 0.0 })\
-		.add(&"Done") # The percentage is already implied to be 100% when done
+		.add(&"Done") # We don't need to store percentage when done!
 	
-	var state: EnumVariant = ProcessStates.Processing
+	var state: EnumVar = ProcessStates.Processing
 	
 	while true:
 		print_console("state = %s" % state)

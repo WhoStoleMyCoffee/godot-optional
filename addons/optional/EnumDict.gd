@@ -5,9 +5,9 @@ class_name EnumDict extends RefCounted
 ## In most programming languages, enums are, under the hood, represented as [int]s.[br]
 ## This makes them effective for simple state flags, but useless for carrying variant-specific data (similar motives to [Error])[br]
 ## [br]
-## [EnumDict]s work in the [b]exact same[/b] way as [EnumStruct]s, so see those further documentation[br]
-## The only difference is that [EnumDict]s return Dictionaries as variants (with an extra [code]EnumDict[/code] property) instead of [EnumVariant]s, which could be useful in some cases[br]
-## Whether you use [EnumStruct] or [EnumDict] is up to your preference
+## [EnumDict]s work in the [b]exact same[/b] way as [Enum]s, so see those further documentation[br]
+## The only difference is that [EnumDict]s return Dictionaries as variants (with an extra [code]EnumDict[/code] property) instead of [EnumVar]s, which could be useful in some cases[br]
+## Whether you use [Enum] or [EnumDict] is up to your preference
 
 # Dictionary<StringName, Dictionary>
 # {
@@ -56,19 +56,20 @@ func get_variant_list() -> Array[StringName]:
 
 ## Checks whether [param enum_dict] is within this [EnumDict][br]
 ## Returns a [Result]<[EnumDict], [Error]>:[br]
-## - [code]Err(Error(ERR_DOES_NOT_EXIST))[/code] if this [EnumDict] doesn't contain the variant[br]
-## - [code]Err(Error(ERR_INVALID_DATA))[/code] if the variant exists but there are missing variables[br]
+## - [code]Err(Error([/code] [constant Error.NotContained] [code]))[/code] if this [Enum] doesn't contain the [param enum_variant][br]
+## - [code]Err(Error([/code] [constant Error.MissingParameters] [code]))[/code] if the [param enum_dict] exists but there are missing parameters[br]
 ## - [code]Ok(enum_dict)[/code] otherwise[br]
-## See [Result], [Error]
+## See [Result], [Error][br]
+## Panics (stops the program via assert()) if [param enum_dict] is not an [EnumDict] variant
 func contains(enum_dict: Dictionary) -> Result:
 	assert(enum_dict.has("EnumDict"), "Parameter enum_dict must be an EnumDict variant")
 	
 	if !_variants.has(enum_dict.EnumDict):
-		return Result.newError(ERR_DOES_NOT_EXIST)\
+		return Result.newError(Error.NotContained)\
 			.err_info('variant', enum_dict.EnumDict)\
 			.err_msg("This enum does not have the specified variant")
 	elif !enum_dict.has_all( _variants[enum_dict.EnumDict].keys() ):
-		return Result.newError(ERR_INVALID_DATA)\
+		return Result.newError(Error.MissingParameters)\
 			.err_info('expected', _variants[enum_dict.EnumDict].keys())\
 			.err_info('found', enum_dict.keys())\
 			.err_msg("The enum dict is missing some paramters")

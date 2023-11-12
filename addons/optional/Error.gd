@@ -37,8 +37,11 @@ class_name Error extends RefCounted
 # This enum is unnamed for convenience
 enum {
 	Other = ERR_PRINTER_ON_FIRE+1, ## Other error type. Below ERR_PRINTER_ON_FIRE is reserved for [enum @GlobalScope.Error]
+	MissingParameters,
+	NotContained,
+	
 	# Define custom errors here ...
-	ExampleError, ## Error used in the examples. See res://addons/optional/examples/
+	ExampleError, ## Error used in the examples. See res://addons/optional/examples/. You may delete this if you want
 }
 
 ## The [Error]'s type. This can be a custom error type defined in the [Error] script or a [enum @GlobalScope.Error]
