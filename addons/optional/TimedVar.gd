@@ -1,11 +1,40 @@
 class_name TimedVar extends RefCounted
+## A variable that keeps track of time
+##
+## [TimedVar]s keep track of when they were created, and can expire after a certain amount of time if configured to (see [method with_lifespan]).
+## [br]When expired, the contained value will be deleted (set to null)
+## [br]A [TimedVar] with no lifespan will not expire unless made to (See [method force_expiration], [method take])
+## [br][br]Usage:
+## [codeblock]
+## var t: TimedVar = TimedVar.new(42) .with_lifespan(1000) # Expires after 1s
+## print("Init: ", t)
+## print(" value = ", t.get_value())
+## 
+## await get_tree().create_timer(0.5).timeout
+## print("After 0.5s: ", t)
+## print(" value = ", t.get_value())
+## 
+## await get_tree().create_timer(1.0).timeout
+## print("After 1.5s: ", t)
+## print(" value = ", t.get_value())
+##
+## Should print:
+##  Init: TimedVar(42: expires in 0.80s)
+##   value = Some(42)
+##  After 0.5s: TimedVar(42: expires in 0.30s)
+##   value = Some(42)
+##  After 1.5s: TimedVar::Expired
+##   value = None
+## [/codeblock]
 
 ## The tick (in milliseconds) this [TimedVar] was created[br]
 ## You can use it to compare with [method Time.get_ticks_msec]
 var created_tick_ms: int = 0
+## How long this var will live for[br]
+## If 0, this var will never expire
+var lifespan: int = 0
 
 var _value: Variant
-var lifespan: int = 0
 var _is_expired: bool = false :
 	set(v):
 		if v:
@@ -14,6 +43,8 @@ var _is_expired: bool = false :
 		_is_expired = v
 
 ## Constructor function
+## [br]By default, [TimedVar]s only keep track of when they were created.
+## [br]To add a lifespan, see [method with_lifespan]
 func _init(value: Variant):
 	_value = value
 	created_tick_ms = Time.get_ticks_msec()
@@ -21,9 +52,9 @@ func _init(value: Variant):
 	_is_expired = false
 	call_deferred(&"update")
 
+## Create an empty [TimedVar] that only keeps track of when it was created
 static func empty() -> TimedVar:
 	var tv: TimedVar = TimedVar.new(null)
-	tv.created_tick_ms = 0
 	return tv
 
 func _to_string() -> String:
@@ -35,20 +66,60 @@ func _to_string() -> String:
 	return "TimedVar(%s: expires in %.2fs)" % [_value, time_ms_until_expiration().unwrap_unchecked() * 0.001]
 
 
-## Set the lifespan on this [TimedVar], after which it will expire[br]
-## See also [method no_lifespan]
-## Returns self
+## Set a new lifespan for this [TimedVar], counting from now, after which it will expire[br]
+## For a method that doesn't change [member created_tick_ms], see [method set_lifespan][br]
+## [codeblock]
+## Before calling with_lifespan():
+##     (created) --> (now)
+##     Or if a lifespan is already set:
+##     (created) --> (now) =======> (lifespan)
+## After calling with_lifespan():
+##     ------------> (created) ================> (new lifespan)
+##                   (now)
+## [/codeblock]
+## It is more common to use this method upon initialization:
+## [br][code]var timed_var = TimedVar.new( 42 ) .with_lifespan(1000)[/code]
+## [br]Returns self
 func with_lifespan(lifespan_ms: int) -> TimedVar:
+	assert(lifespan_ms > 0)
+	created_tick_ms = Time.get_ticks_msec()
+	lifespan = lifespan_ms
+	return self
+
+## Set the lifespan for this [TimedVar], after which it will expire[br]
+## This method doesn't change [member created_tick_ms], so it's useful for changing only the lifespan on the fly.
+## Also see [method with_lifespan]
+## [br]Returns self
+## [codeblock]
+## Before calling set_lifespan():
+##     (created) --> (now)
+##     Or if a lifespan is already set:
+##     (created) --> (now) =======> (lifespan)
+## After calling set_lifespan():
+##     (created) ==> (now) ==================> (new lifespan)
+## [/codeblock]
+func set_lifespan(lifespan_ms: int) -> TimedVar:
 	assert(lifespan_ms > 0)
 	lifespan = lifespan_ms
 	return self
 
+## Removes the lifespan on this [TimedVar] if there is one, making it so it only keeps track of when it was created
+## [br]This is the default state of [TimedVar]s upon construction
+## [br]Return self
+## [codeblock]
+## var timedvar = TimedVar.new("foo") .with_lifespan(5000) # Will expire after 5s
+## ...
+## timedvar.no_lifespan()
+## # timedvar will no longer expire
+## # You can still call methods like time_ms() to check how long it's been alive for
+## [/codeblock]
 func no_lifespan() -> TimedVar:
 	lifespan = 0
 	return self
 
-## Schedule the expiration of this var at a specific tick[br]
-## Returns self
+## Schedule the expiration of this var at a specific tick
+## [br]The difference between this and [method with_lifespan] is that [method with_lifespan] defines [i]how long until[/i] this var expires, while [method until] defines [i]when[/i] this var will expire.
+## [br]Returns self
 func until(tick_ms: int) -> TimedVar:
 	lifespan = tick_ms - Time.get_ticks_msec()
 	return self
@@ -61,33 +132,59 @@ func time_ms() -> int:
 func time_secs() -> float:
 	return (Time.get_ticks_msec() - created_tick_ms) * 0.001
 
-## Returns Option<float>
+## Returns [code]Option<float>[/code] containing the time in milliseconds until this var expires
+## [br]If this [TimedVar] has no lifespan or is already expired, it will return [code]None[/code]
 func time_ms_until_expiration() -> Option:
 	update()
 	if _is_expired or lifespan <= 0:
 		return Option.None()
 	return Option.Some( created_tick_ms + lifespan - Time.get_ticks_msec() )
 
-## Returns self
+## Forces this [TimedVar] to expire
+## [br]Returns self
 func force_expiration() -> TimedVar:
 	_is_expired = true
 	return self
 
 
-## For a non-resetting option, see [method mut_value]
+## Sets the contained value and extends when this [TimedVar] will expire (if a lifespan is configured)
+## [br]For a non-resetting option, see [method mut_value]
+## [br]Returns self
+## [codeblock]
+## var timed = TimedVar.new("foo") .with_lifespan(5000)
+## print( timed ) # TimedVar(foo: expires in 5.00s)
+## ...
+## timed.set_value("bar")
+## print( timed ) # TimedVar(bar: expires in 5.00s)
+## [/codeblock]
 func set_value(value: Variant) -> TimedVar:
 	_value = value
 	created_tick_ms = Time.get_ticks_msec()
 	_is_expired = false
 	return self
 
-## Returns self
+## Sets the contained value [b]without[/b] extending the lifespan (if a lifespan is configured)
+## [br]Returns self
+## [codeblock]
+## var timed = TimedVar.new("foo") .with_lifespan(5000)
+## print( timed ) # TimedVar(foo: expires in 5.00s)
+## 
+## # Wait for 2 seconds ...
+## 
+## timed.mut_value("bar")
+## print( timed ) # TimedVar(bar: expires in 3.00s)
+## [/codeblock]
+## This method does nothing if this [TimedVar] is already expired
 func mut_value(value: Variant) -> TimedVar:
 	if !update()._is_expired:
 		_value = value
 	return self
 
 
+## Returns [code]Option<Variant>[/code] with the contained value
+## [br]This method will return [code]None[/code] if this [TimedVar] is expired
+## [br][b]Note[/b]:
+## [br]  Due to how [Option]s are implemented, this method will return [code]None[/code] if the contained value is [code]null[/code]
 func get_value() -> Option:
 	if update()._is_expired:
 		return Option.None()
@@ -99,7 +196,8 @@ func get_value() -> Option:
 	return Option.new(_value)
 
 
-# override lifespan
+## Returns [code]Option<Variant>[/code] with the contained value
+## [br]This method is the same as [method get_value], except that it overrides the lifespan with [param lifespan_ms]
 func get_value_timed(lifespan_ms: int) -> Option:
 	if update()._is_expired:
 		return Option.None()
@@ -108,9 +206,35 @@ func get_value_timed(lifespan_ms: int) -> Option:
 		_is_expired = true
 	return Option.new(_value)
 
+## Returns the contained value without any additional checks
+## [br]Because of that, it may lead to undefined behavior
+## [codeblock]
+## var timed = TimedVar.new("foo")
+## # It's okay here because we know that timed cannot be expired
+## timed.get_value_unchecked()
+## 
+## if !timed.is_expired():
+##     # It's also okay here because we checked whether timed is expired
+##     timed.get_value_unchecked()
+## [/codeblock]
 func get_value_unchecked() -> Variant:
 	return _value
 
+## Returns [code]Option<Variant>[/code] with the contained value
+## [br]This method is the same as [method get_value], except that the contained value is taken, expiring this [TimedVar]
+## [codeblock]
+## var t: TimedVar = TimedVar.new("foo")
+## print(t.get_value())
+## print(t)
+## print(t.take())
+## print(t)
+## 
+## Prints:
+##  Some(foo)
+##  TimedVar(foo: alive for 0.00s)
+##  Some(foo)
+##  TimedVar::Expired
+## [/codeblock]
 func take() -> Option:
 	if update()._is_expired:
 		return Option.None()
@@ -126,6 +250,8 @@ func take() -> Option:
 	_is_expired = true
 	return Option.new(ret_value)
 
+## Returns [code]Option<Variant>[/code] with the contained value
+## [br]This method is the same as [method take], except that it overrides the lifespan with [param lifespan_ms]
 func take_timed(lifespan_ms: int) -> Option:
 	if update()._is_expired:
 		return Option.None()
@@ -140,7 +266,9 @@ func take_timed(lifespan_ms: int) -> Option:
 	return Option.new(ret_value)
 
 
-## Returns self
+## Checks this [TimedVar]'s expiration and updates the inner state
+## [br]Returns self
+## [br]You should almost never have to call this method since state checks are performed extensively
 func update() -> TimedVar:
 	if _is_expired:
 		return self
@@ -149,21 +277,34 @@ func update() -> TimedVar:
 		_is_expired = true
 	return self
 
+## Returns whether this [TimedVar] as a lifespan configured
 func has_lifespan() -> bool:
 	return lifespan > 0
 
-## Returns: Option<int>
+## Returns: [code]Option<int>[/code] containing this [TimedVar]'s lifespan
+## [br]Returns [code]Nonde[/code] if this [TimedVar] has no lifespan configured
 func get_lifespan_ms() -> Option:
 	update()
 	return Option.Some(lifespan) if lifespan > 0 and !_is_expired else Option.None()
 
+## Returns the lifespan of this [TimedVar] without any additional checks
+## [br]This is the same as just accessing the [member lifespan] property
+func get_lifespan_ms_unchecked() -> int:
+	return lifespan
+
+## Checks and returns whether this [TimedVar] will expire in the future
+## [br]i.e. whether it has a lifespan and is not already expired
 func is_expiration_scheduled() -> bool:
 	update()
 	return lifespan > 0 and !_is_expired
 
+## Checks and returns whether this [TimedVar] is expired
 func is_expired() -> bool:
 	return update()._is_expired
 
+## Returns whether this [TimedVar] is expired without any additional checks
+## [br]If not used properly, it may cause undefined behavior
+## [br]See also [method is_expired]
 func is_expired_unchecked() -> bool:
 	return _is_expired
 

@@ -46,7 +46,7 @@ func file_open():
 	print_console('Result 1 (should fail) = ' + str(res1))
 	
 	# Should succeed with Ok() containing the file content
-	var res2: Result = Result.parse_json_file("res://addons/optional/examples/userdata.json")\
+	var res2: Result = Result.parse_json_file("res://addons/optional/examples/example_userdata.json")\
 		.err_msg("Failed to load JSON: ")
 	print_console('Result 2 (should succeed) = ' + str(res2))
 

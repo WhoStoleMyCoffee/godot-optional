@@ -1,15 +1,29 @@
 extends Control
 
+
+
+# TODO examples
+func example_timedvar():
+	var t: TimedVar = TimedVar.new(42) .with_lifespan(1000)
+	print("Init: ", t)
+	print(" value = ", t.get_value())
+	
+	await get_tree().create_timer(0.5).timeout
+	print("After 0.5s: ", t)
+	print(" value = ", t.get_value())
+	
+	await get_tree().create_timer(1.0).timeout
+	print("After 1.5s: ", t)
+	print(" value = ", t.get_value())
+
+
+
 """
-* USING ENUMS *
-This example shows you how to effectively use Enums, EnumVars, and EnumDicts
-I recommend using Enum instead of EnumDict if in doubt on which to use
+* MISCELLANEOUS EXAMPLES *
 
 Note:
 	Normally, you'd want Enum (or EnumDict) declarations to be static vars
 	Here, they're not because we can't define statics inside functions
-
-I highly recommend reading through the F1 help for Enum
 """
 
 """
@@ -46,7 +60,7 @@ func example_pet_state():
 	
 	var pet_state: Dictionary = PetState.Idle
 	print_console("pet_state = %s" % pet_state) # Kind of ugly
-	print_console("pet_state = %s" % EnumDict.stringify(pet_state)) # Prettier
+	print_console("pet_state = %s" % EnumDict.stringify(pet_state)) # Prettier, but more verbose in code
 	
 	pet_state = PetState.variant(&"Following", { "player": "player2" })
 	print_console("pet_state = %s" % EnumDict.stringify(pet_state))
