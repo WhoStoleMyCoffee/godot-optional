@@ -313,6 +313,22 @@ func or_else(op: Callable) -> Result:
 		return self
 	return op.call(_value)
 
+# TODO documentation
+## Checks whether the contained value matches [param rhs]
+## [br]i.e. checks that [code]self == Ok(rhs)[/code]
+## [br]If this [Result] is an [code]Err[/code], this method will return [code]false[/code]
+## @experimental
+func matches(rhs: Variant) -> bool:
+	return _value == rhs and _is_ok
+
+# TODO documentation
+## Checks whether the contained error matches [param rhs]
+## [br]i.e. checks that [code]self == Err(rhs)[/code]
+## [br]If this [Result] is an [code]Ok[/code], this method will return [code]false[/code]
+## @experimental
+func matches_err(rhs: Variant) -> bool:
+	return _value == rhs and !_is_ok
+
 
 # ----------------------------------------------------------------
 # ** Util **

@@ -31,7 +31,7 @@ class_name EnumVar extends RefCounted
 ## [/codeblock]
 ##
 ## Note: if you prefer enum variants to be Dictionaries instead of Objects, see [EnumDict]s
-## @deprecated
+## @experimental
 
 ## The [Enum] this variant is from
 var base_enum: Enum # TODO remove?

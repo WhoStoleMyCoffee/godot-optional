@@ -1,23 +1,5 @@
 extends Control
 
-
-
-# TODO examples
-func example_timedvar():
-	var t: TimedVar = TimedVar.new(42) .with_lifespan(1000)
-	print("Init: ", t)
-	print(" value = ", t.get_value())
-	
-	await get_tree().create_timer(0.5).timeout
-	print("After 0.5s: ", t)
-	print(" value = ", t.get_value())
-	
-	await get_tree().create_timer(1.0).timeout
-	print("After 1.5s: ", t)
-	print(" value = ", t.get_value())
-
-
-
 """
 * MISCELLANEOUS EXAMPLES *
 
@@ -64,6 +46,46 @@ func example_pet_state():
 	
 	pet_state = PetState.variant(&"Following", { "player": "player2" })
 	print_console("pet_state = %s" % EnumDict.stringify(pet_state))
+
+
+"""
+This example demonstrates the use of TimedVars for use in combo systems
+param_delay controls the time between simulated attacks; see what happens when
+ it changes!
+"""
+func example_combo():
+	var param_delay: float = 0.2
+	#var param_delay: float = 0.6 # A little slow. No 'biggest slash' at the end
+	#var param_delay: float = 1.5 # Too slow! No combo for you!
+	
+	var combo: TimedVar = TimedVar.empty() # Combo not yet started
+	print_console("  combo = %s" % combo)
+	
+	await get_tree().create_timer( param_delay ).timeout
+	# Start the combo with a slash
+	print_console("SLASH!")
+	combo.set_value("slash") .set_lifespan(1000) # 1s window for following combos
+	print_console("  combo = %s" % combo)
+
+	await get_tree().create_timer( param_delay ).timeout
+	# Follow it up with a big slash
+	if combo.get_value() .matches("slash"):
+		print_console("BIG SLASH!")
+		combo.set_value("slash_big")
+	else:
+		print_console("No big slash")
+	print_console("  combo = %s" % combo)
+	
+	await get_tree().create_timer( param_delay ).timeout
+	# End it with a biggest slash, but with a tighter timing window of 0.5s
+	# Using take() (or in this case, take_timed()) takes care of finishing the
+	#  combo with no loose ends
+	if combo.take_timed(500) .matches("slash_big"):
+		print_console("BIGGEST SLASH!!!")
+	else:
+		print_console("No biggest slash :(")
+	print_console("  combo = %s" % combo)
+
 
 
 func print_console(string: String):

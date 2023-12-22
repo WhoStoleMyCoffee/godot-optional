@@ -1,12 +1,12 @@
 class_name TimedVar extends RefCounted
 ## A variable that keeps track of time
 ##
-## [TimedVar]s keep track of when they were created, and can expire after a certain amount of time if configured to (see [method with_lifespan]).
+## [TimedVar]s keep track of when they were created, and can expire after a certain amount of time if configured to (see [method set_lifespan]).
 ## [br]When expired, the contained value will be deleted (set to null)
 ## [br]A [TimedVar] with no lifespan will not expire unless made to (See [method force_expiration], [method take])
 ## [br][br]Usage:
 ## [codeblock]
-## var t: TimedVar = TimedVar.new(42) .with_lifespan(1000) # Expires after 1s
+## var t: TimedVar = TimedVar.new(42) .set_lifespan(1000) # Expires after 1s
 ## print("Init: ", t)
 ## print(" value = ", t.get_value())
 ## 
@@ -44,7 +44,7 @@ var _is_expired: bool = false :
 
 ## Constructor function
 ## [br]By default, [TimedVar]s only keep track of when they were created.
-## [br]To add a lifespan, see [method with_lifespan]
+## [br]To add a lifespan, see [method set_lifespan]
 func _init(value: Variant):
 	_value = value
 	created_tick_ms = Time.get_ticks_msec()
@@ -57,6 +57,12 @@ static func empty() -> TimedVar:
 	var tv: TimedVar = TimedVar.new(null)
 	return tv
 
+## Create a new [TimedVar] that will live for [param lifespan_ms]
+## [br]This is the equivalent to doing
+## [br][code]var timed = TimedVar.new(value) .set_lifespan(lifespan_ms)[/code]
+static func with_lifespan(value: Variant, lifespan_ms: int) -> TimedVar:
+	return TimedVar.new(value) .set_lifespan(lifespan_ms)
+
 func _to_string() -> String:
 	update()
 	if _is_expired:
@@ -66,48 +72,43 @@ func _to_string() -> String:
 	return "TimedVar(%s: expires in %.2fs)" % [_value, time_ms_until_expiration().unwrap_unchecked() * 0.001]
 
 
-## Set a new lifespan for this [TimedVar], counting from now, after which it will expire[br]
-## For a method that doesn't change [member created_tick_ms], see [method set_lifespan][br]
+## Returns self.
+## [br]Set a new lifespan for this [TimedVar], counting from now, after which it will expire
 ## [codeblock]
-## Before calling with_lifespan():
+## Before calling set_lifespan():
 ##     (created) --> (now)
 ##     Or if a lifespan is already set:
-##     (created) --> (now) =======> (lifespan)
-## After calling with_lifespan():
+##     (created) ==> (now) =======> (lifespan)
+## After calling set_lifespan():
 ##     ------------> (created) ================> (new lifespan)
 ##                   (now)
 ## [/codeblock]
 ## It is more common to use this method upon initialization:
-## [br][code]var timed_var = TimedVar.new( 42 ) .with_lifespan(1000)[/code]
-## [br]Returns self
-func with_lifespan(lifespan_ms: int) -> TimedVar:
+## [br][code]var timed_var = TimedVar.new( 42 ) .set_lifespan(1000)[/code]
+## [br]which would be the same as writing:
+## [br][code]var timed_var = TimedVar.with_lifespan( 42, 1000 )[/code]
+## [br][br]If you don't want to change [member created_tick_ms], please set [member lifespan] manually
+## [codeblock]
+## Before:
+##     (created) --> (now)
+##     Or if a lifespan is already set:
+##     (created) ==> (now) =======> (lifespan)
+## After:
+##     (created) ==> (now) ==================> (new lifespan)
+## [/codeblock]
+func set_lifespan(lifespan_ms: int) -> TimedVar:
 	assert(lifespan_ms > 0)
 	created_tick_ms = Time.get_ticks_msec()
 	lifespan = lifespan_ms
 	return self
 
-## Set the lifespan for this [TimedVar], after which it will expire[br]
-## This method doesn't change [member created_tick_ms], so it's useful for changing only the lifespan on the fly.
-## Also see [method with_lifespan]
-## [br]Returns self
-## [codeblock]
-## Before calling set_lifespan():
-##     (created) --> (now)
-##     Or if a lifespan is already set:
-##     (created) --> (now) =======> (lifespan)
-## After calling set_lifespan():
-##     (created) ==> (now) ==================> (new lifespan)
-## [/codeblock]
-func set_lifespan(lifespan_ms: int) -> TimedVar:
-	assert(lifespan_ms > 0)
-	lifespan = lifespan_ms
-	return self
+
 
 ## Removes the lifespan on this [TimedVar] if there is one, making it so it only keeps track of when it was created
 ## [br]This is the default state of [TimedVar]s upon construction
 ## [br]Return self
 ## [codeblock]
-## var timedvar = TimedVar.new("foo") .with_lifespan(5000) # Will expire after 5s
+## var timedvar = TimedVar.new("foo") .set_lifespan(5000) # Will expire after 5s
 ## ...
 ## timedvar.no_lifespan()
 ## # timedvar will no longer expire
@@ -118,7 +119,7 @@ func no_lifespan() -> TimedVar:
 	return self
 
 ## Schedule the expiration of this var at a specific tick
-## [br]The difference between this and [method with_lifespan] is that [method with_lifespan] defines [i]how long until[/i] this var expires, while [method until] defines [i]when[/i] this var will expire.
+## [br]The difference between this and [method set_lifespan] is that [method set_lifespan] defines [i]how long until[/i] this var expires, while [method until] defines [i]when[/i] this var will expire.
 ## [br]Returns self
 func until(tick_ms: int) -> TimedVar:
 	lifespan = tick_ms - Time.get_ticks_msec()
@@ -151,7 +152,7 @@ func force_expiration() -> TimedVar:
 ## [br]For a non-resetting option, see [method mut_value]
 ## [br]Returns self
 ## [codeblock]
-## var timed = TimedVar.new("foo") .with_lifespan(5000)
+## var timed = TimedVar.new("foo") .set_lifespan(5000)
 ## print( timed ) # TimedVar(foo: expires in 5.00s)
 ## ...
 ## timed.set_value("bar")
@@ -166,7 +167,7 @@ func set_value(value: Variant) -> TimedVar:
 ## Sets the contained value [b]without[/b] extending the lifespan (if a lifespan is configured)
 ## [br]Returns self
 ## [codeblock]
-## var timed = TimedVar.new("foo") .with_lifespan(5000)
+## var timed = TimedVar.new("foo") .set_lifespan(5000)
 ## print( timed ) # TimedVar(foo: expires in 5.00s)
 ## 
 ## # Wait for 2 seconds ...
@@ -237,12 +238,6 @@ func get_value_unchecked() -> Variant:
 ## [/codeblock]
 func take() -> Option:
 	if update()._is_expired:
-		return Option.None()
-	# Check scheduled expiration
-	if lifespan > 0 and Time.get_ticks_msec() > created_tick_ms + lifespan:
-		_value = null
-		created_tick_ms = 0
-		_is_expired = true
 		return Option.None()
 	
 	# Not expired; take

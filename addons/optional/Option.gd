@@ -28,8 +28,6 @@ class_name Option extends RefCounted
 
 var _value: Variant = null
 
-# TODO signal value_changed
-
 static func Some(v) -> Option:
 	assert(v != null, "Cannot assign null to an Some")
 	return Option.new(v)
@@ -252,12 +250,12 @@ func take() -> Option:
 	_value = null
 	return o
 
-## Replaces teh actual value in the option by the given [param value]
+## Replaces the contained value in the option with the given [param value]
 ## Example:
 ## [codeblock]
 ## var x = Option.Some(2)
 ## var old = x.replace(5)
-## print("x=", x, " y=", y) # Prints "x=Some(5) y=Some(2)"
+## print("x =", x, ", old =", old) # Prints "x = Some(5), old = Some(2)"
 ## [/codeblock]
 func replace(value) -> Option:
 	assert(value != null)
@@ -288,6 +286,14 @@ func typed(type: Variant.Type) -> Option:
 	if typeof(_value) == type:
 		return self
 	return Option.None()
+
+# TODO documentation
+## Checks whether the contained value matches [param rhs]
+## [br]i.e. checks that [code]self == Some(rhs)[/code]
+## [br]If this [Option] is a [code]None[/code], this method will return [code]false[/code]
+## @experimental
+func matches(rhs: Variant) -> bool:
+	return _value == rhs and _value != null
 
 ## Transforms the [Option] into a [Result]
 func ok_or(err: Variant) -> Result:

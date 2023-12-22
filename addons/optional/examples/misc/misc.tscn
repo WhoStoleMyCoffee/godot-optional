@@ -36,6 +36,10 @@ text = "example_process"
 layout_mode = 2
 text = "example_pet_state (using EnumDict)"
 
+[node name="Combo" type="Button" parent="VSplitContainer/GridContainer"]
+layout_mode = 2
+text = "example_combo"
+
 [node name="RichTextLabel" type="RichTextLabel" parent="VSplitContainer"]
 layout_mode = 2
 bbcode_enabled = true
@@ -44,3 +48,4 @@ scroll_following = true
 
 [connection signal="pressed" from="VSplitContainer/GridContainer/Process" to="." method="_on_button_pressed" binds= ["example_process"]]
 [connection signal="pressed" from="VSplitContainer/GridContainer/PetState" to="." method="_on_button_pressed" binds= ["example_pet_state"]]
+[connection signal="pressed" from="VSplitContainer/GridContainer/Combo" to="." method="_on_button_pressed" binds= ["example_combo"]]

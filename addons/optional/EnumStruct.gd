@@ -49,7 +49,7 @@ class_name Enum extends RefCounted
 ## 
 ## let cat_state: AnimalState = AnimalState::Alive{ is_hungry: true };
 ## [/codeblock]
-## @deprecated
+## @experimental
 
 
 # Dictionary<StringName, Dictionary>

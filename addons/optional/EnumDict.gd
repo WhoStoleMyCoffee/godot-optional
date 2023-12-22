@@ -8,6 +8,7 @@ class_name EnumDict extends RefCounted
 ## [EnumDict]s work in the [b]exact same[/b] way as [Enum]s, so see those further documentation[br]
 ## The only difference is that [EnumDict]s return Dictionaries as variants (with an extra [code]EnumDict[/code] property) instead of [EnumVar]s, which could be useful in some cases[br]
 ## Whether you use [Enum] or [EnumDict] is up to your preference
+## @experimental
 
 # Dictionary<StringName, Dictionary>
 # {
