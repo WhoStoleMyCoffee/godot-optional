@@ -114,8 +114,49 @@ enum {
 ```
 ![](screenshots/example_custom_errors.png)
 
-## Enum Structs
-Godot-optional now supports enum structs!
+## TimedVar
+`TimedVar`s are variables that keep track of when they were created and can expire after a certain amount of time if configured to.
+
+When expired, the contained value will be deleted (set to `null / None`)
+
+Example: Creating a combo system using `TimedVar`s
+
+```gdscript
+var combo: TimedVar = TimedVar.empty() # Combo not yet started
+print("  combo = ", combo)
+
+# Player input ...
+
+# Start the combo with a slash
+print("SLASH!")
+combo.set_value("slash")\
+	.set_lifespan(1000) # 1s window for following combos
+
+# Player input ...
+
+# Follow it up with a big slash
+if combo.get_value() .matches("slash"):
+	print("BIG SLASH!")
+	combo.set_value("slash_big") # Also resets lifespan back to that 1s window we defined earlier
+# Too late! `combo` already expired, so no more follow-ups!
+else:
+	print("No big slash")
+
+# Player input ...
+
+# End it with 'a biggest slash', but with a tighter timing window of 0.5s
+# Using take() (or in this case, take_timed()) takes care of finishing the
+#  combo with no loose ends
+if combo.take_timed(500) .matches("slash_big"):
+	print("BIGGEST SLASH ULTIMATE!!!")
+# Too late! `combo` already expired, so no more follow-ups!
+else:
+	print("No biggest slash :(")
+```
+
+---
+
+### Enum Structs (experimental)
 
 Usage:
 

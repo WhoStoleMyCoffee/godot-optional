@@ -6,25 +6,23 @@ class_name TimedVar extends RefCounted
 ## [br]A [TimedVar] with no lifespan will not expire unless made to (See [method force_expiration], [method take])
 ## [br][br]Usage:
 ## [codeblock]
-## var t: TimedVar = TimedVar.new(42) .set_lifespan(1000) # Expires after 1s
+## var t: TimedVar = TimedVar.with_lifespan(42, 800) # Expires after 0.8s
 ## print("Init: ", t)
 ## print(" value = ", t.get_value())
+## # Init: TimedVar(42: expires in 0.80s)
+## #  value = Some(42)
 ## 
 ## await get_tree().create_timer(0.5).timeout
 ## print("After 0.5s: ", t)
 ## print(" value = ", t.get_value())
+## # After 0.5s: TimedVar(42: expires in 0.30s)
+## #  value = Some(42)
 ## 
 ## await get_tree().create_timer(1.0).timeout
 ## print("After 1.5s: ", t)
 ## print(" value = ", t.get_value())
-##
-## Should print:
-##  Init: TimedVar(42: expires in 0.80s)
-##   value = Some(42)
-##  After 0.5s: TimedVar(42: expires in 0.30s)
-##   value = Some(42)
-##  After 1.5s: TimedVar::Expired
-##   value = None
+## # After 1.5s: TimedVar::Expired
+## #  value = None
 ## [/codeblock]
 
 ## The tick (in milliseconds) this [TimedVar] was created[br]
@@ -44,7 +42,14 @@ var _is_expired: bool = false :
 
 ## Constructor function
 ## [br]By default, [TimedVar]s only keep track of when they were created.
-## [br]To add a lifespan, see [method set_lifespan]
+## [br]See also [method with_lifespan]
+## [codeblock]
+## var timed = TimedVar.new("foo")
+## 
+## await get_tree().create_timer(0.6).timeout
+## print( timed.get_value() ) # Some("foo")
+## print( timed.time_ms() ) # Should print "600", but may vary slightly, of course
+## [/codeblock]
 func _init(value: Variant):
 	_value = value
 	created_tick_ms = Time.get_ticks_msec()
