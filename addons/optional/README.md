@@ -2,6 +2,14 @@
 ## Better error handling for Godot!
 Introduces to Godot Option, Result, and custom Error types inspired by Rust
 
+#### Features
+
+- [Optionals](#option) to explicitly annotate that a variable can be `null`
+- [Results](#result) to explicitly annotate that an operation can fail
+- [Custom error types](#custom-error-types) specific to your application
+- [TimedVars](#timedvar) that can delete themselves after a set amount of time
+- [EnumStructs](#enum-structs-experimental)
+
 ## Option
 A generic `Option<T>`
 
@@ -19,11 +27,11 @@ if res.is_none():
     print("Player doesn't exist!")
     return
 
-var data = res.expect("Already checked if None or Some above") # Safest
-var data = res.unwrap() # Crashes if res is None. Least safe, but quick for prototyping
+var data = res.expect("Already checked if None or Some above")
+var data = res.unwrap() # Crashes if res is None, but quick for prototyping
 var data = res.unwrap_or( 42 ) # Get from default value
 var data = res.unwrap_or_else( some_complex_function ) # Get default value from function
-var data = res.unwrap_unchecked() # It's okay to use it here because we've already checked above
+var data = res.unwrap_unchecked() # Least safe. It's okay to use it here because we've already checked above
 ```
 
 Option also comes with a safe way to index arrays and dictionaries
