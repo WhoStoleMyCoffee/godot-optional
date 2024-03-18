@@ -104,17 +104,17 @@ func get_variant_list() -> Array[StringName]:
 ## See [Result], [Error]
 func contains(enum_variant: EnumVar) -> Result:
 	if enum_variant.base_enum != self:
-		return Result.newError(ERR_INVALID_PARAMETER)\
+		return Result.error(ERR_INVALID_PARAMETER)\
 			.err_info('variant', enum_variant.variant)\
 			.err_msg("The variant is from a different enum")
 	
 	elif !_variants.has(enum_variant.variant):
-		return Result.newError(Error.NotContained)\
+		return Result.error(Error.NotContained)\
 			.err_info('variant', enum_variant.variant)\
 			.err_msg("This enum does not have the specified variant")
 	
 	elif !enum_variant.values.has_all( _variants[enum_variant.variant].keys() ):
-		return Result.newError(Error.MissingParameters)\
+		return Result.error(Error.MissingParameters)\
 			.err_info('expected', _variants[enum_variant.variant].keys())\
 			.err_info('found', enum_variant.values.keys())\
 			.err_msg("The enum dict is missing some paramters")

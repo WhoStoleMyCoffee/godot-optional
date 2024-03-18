@@ -131,6 +131,7 @@ func map(f: Callable) -> Option:
 
 ## [code]f: func(T) -> void[/code][br]
 ## Maps an [code]Option<T>[/code] to [code]Option<U>[/code] by applying a function to the contained value mutably (if [code]Some[/code])
+## [br]Also good if you simply want to execute a block of code if [code]Some[/code]
 func map_mut(f: Callable) -> Option:
 	if _value == null:
 		return self
@@ -149,9 +150,11 @@ func map_mut(f: Callable) -> Option:
 ## [/codeblock]
 func map_or(default, f: Callable) -> Variant:
 	if _value == null:
-		assert(default != null)
+		assert(default != null, "The default value must not be `null`")
 		return default
-	return f.call(_value)
+	var u: Variant = f.call(_value)
+	assert(u != null, "The function `f` must not return `null`")
+	return u
 
 ## [code]default: func() -> U[/code][br]
 ## [code]f: func(T) -> U[/code][br]
@@ -159,8 +162,12 @@ func map_or(default, f: Callable) -> Variant:
 ## Same as [method map_or] but computes the default from a function
 func map_or_else(default: Callable, f: Callable) -> Variant:
 	if _value == null:
-		return default.call()
-	return f.call(_value)
+		var u: Variant = default.call()
+		assert(u != null, "The default function must not return null")
+		return u
+	var u: Variant = f.call(_value)
+	assert(u != null, "The function `f` must not return null")
+	return u
 
 ## This is the rust equivalent of [code]Option.and()[/code][br]
 ## [param optb]: [code]Option<U>[/code][br]
@@ -191,7 +198,9 @@ func and_opt(optb: Option) -> Option:
 func and_then(f: Callable) -> Option:
 	if _value == null:
 		return self
-	return f.call(_value)
+	var u: Option = f.call(_value)
+	assert(u is Option, "The function `f` must return an Option but returned %s" % u)
+	return u
 
 ## This is the rust equivalent of [code]Option.or()[/code][br]
 ## [param optb]: [code]Option<T>[/code][br]
@@ -223,7 +232,9 @@ func or_opt(optb: Option) -> Option:
 func or_else(f: Callable) -> Option:
 	if _value != null:
 		return self
-	return f.call()
+	var u: Option = f.call()
+	assert(u is Option, "The function `f` must return an Option but returned %s" % u)
+	return u
 
 ## This is the rust equivalent of [code]Option.xor()[/code][br]
 ## [param optb]: [code]Option<T>[/code][br]
@@ -275,9 +286,9 @@ func flatten() -> Option:
 func filter(predicate: Callable) -> Option:
 	if _value == null:
 		return self
-	if predicate.call(_value):
-		return self
-	return Option.None()
+	var v: bool = predicate.call(_value)
+	assert(v is bool, "The predicate function must return a bool but got %s" % v)
+	return self if v else Option.None()
 
 ## Ensures that the type of the contained value is [param type][br]
 ## This is similar to doing
@@ -289,15 +300,13 @@ func typed(type: Variant.Type) -> Option:
 		return self
 	return Option.None()
 
-# TODO documentation
 ## Checks whether the contained value matches [param rhs]
 ## [br]i.e. checks that [code]self == Some(rhs)[/code]
 ## [br]If this [Option] is a [code]None[/code], this method will return [code]false[/code]
-## @experimental
 func matches(rhs: Variant) -> bool:
 	return _value == rhs and _value != null
 
-## Transforms the [Option] into a [Result]
+## Transforms the [Option][code]<T>[/code] into a [Result][code]<T, err>[/code]
 func ok_or(err: Variant) -> Result:
 	if _value == null:
 		return Result.Err(err)

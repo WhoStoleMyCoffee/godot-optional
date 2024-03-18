@@ -48,8 +48,8 @@ static func from_gderr(err: int) -> Result:
 ## Constructs an [code]Err([/code] [Error] [code])[/code] with the error code [param err][br]
 ## Both [enum @GlobalScope.Error] and custom [Error] codes are allowed[br]
 ## [constant @GlobalScope.OK] will result in the [code]Ok()[/code] variant, everything else will result in [code]Err()[/code][br]
-## Also see [method toError]
-static func newError(err: int) -> Result:
+## Also see [method to_custom_error]
+static func error(err: int) -> Result:
 	if err == OK:	return Result.new(OK, true)
 	return Result.new(Error.new(err), false)
 
@@ -99,7 +99,7 @@ func map(op: Callable) -> Result:
 
 ## [code]f: func(T) -> void[/code][br]
 ## Maps a [code]Result<T, E>[/code] to [code]Result<U, E>[/code] by applying a function to the contained value mutably (if [code]Ok[/code])
-## Also good if you simply want to execute a block of code if [code]Ok[/code]
+## [br]Also good if you simply want to execute a block of code if [code]Ok[/code]
 func map_mut(f: Callable) -> Result:
 	if !_is_ok:	return self
 	f.call(_value)
@@ -138,7 +138,7 @@ func map_err(op: Callable) -> Result:
 
 ## [code]f: func(E) -> void[/code][br]
 ## Maps a [code]Result<T, E>[/code] to [code]Result<T, F>[/code] by applying a function to the contained error mutably (if [code]Err[/code])
-## Also good if you simply want to execute a block of code if [code]Err[/code]
+## [br]Also good if you simply want to execute a block of code if [code]Err[/code]
 func map_err_mut(f: Callable) -> Result:
 	if _is_ok:	return self
 	f.call(_value)
@@ -155,13 +155,13 @@ func stringify_err() -> Result:
 	_value = error_string(_value)
 	return self
 
-## Converts this [code]Err([/code][enum @GlobalScope.Error][code])[/code] into [code]Err([/code][Error][code])[/code][br]
+## Converts this [code]Err([/code][enum @GlobalScope.Error][code])[/code] into [code]Err([/code][Error][code])[/code], and returns [code]self[/code][br]
 ## This is similar to doing the following but safer
 ## [codeblock]
 ## result.map_err(Error.new)
 ## [/codeblock]
-## Also see [method newError]
-func toError() -> Result:
+## Also see [method error]
+func to_custom_error() -> Result:
 	if _is_ok or typeof(_value) != TYPE_INT:	return self
 	_value = Error.new(_value)
 	return self
@@ -171,7 +171,7 @@ func toError() -> Result:
 ## [codeblock]
 ## result.map_err(func(err: Error): return err.msg(message))
 ## [/codeblock]
-## See also [method toError], [method err_cause], [method err_info], [method Error.msg]
+## See also [method to_custom_error], [method err_cause], [method err_info], [method Error.msg]
 func err_msg(message: String) -> Result:
 	if _is_ok or !(_value is Error):	return self
 	_value.message = message # Error.msg(message) expanded
@@ -182,7 +182,7 @@ func err_msg(message: String) -> Result:
 ## [codeblock]
 ## result.map_err(func(err: Error): return err.cause(cause))
 ## [/codeblock]
-## See also [method toError], [method err_msg], [method err_info], [method Error.cause]
+## See also [method to_custom_error], [method err_msg], [method err_info], [method Error.cause]
 func err_cause(cause: Variant) -> Result:
 	if _is_ok or !(_value is Error):	return self
 	_value.details.cause = cause # Error.cause(cause) expanded
@@ -210,7 +210,7 @@ func err_as_cause(err: int) -> Result:
 ## [codeblock]
 ## result.map_err(func(err: Error): return err.info(key, value))
 ## [/codeblock]
-## See also [method toError], [method err_msg], [method err_cause], [method Error.info]
+## See also [method to_custom_error], [method err_msg], [method err_cause], [method Error.info]
 func err_info(key: String, value: Variant) -> Result:
 	if _is_ok or !(_value is Error):	return self
 	_value.details[key] = value # Error.info(key, value) expanded
@@ -293,7 +293,9 @@ func report() -> Result:
 func and_then(op: Callable) -> Result:
 	if !_is_ok:
 		return self
-	return op.call(_value)
+	var r: Result = op.call(_value)
+	assert(r is Result, "The function `op` must return a Result but got %s" % r)
+	return r
 
 ## [code]op: func(E) -> Result<T, F>[/code][br]
 ## Calls [param op] if the result is Err, otherwise returns the Ok value
@@ -311,21 +313,19 @@ func and_then(op: Callable) -> Result:
 func or_else(op: Callable) -> Result:
 	if _is_ok:
 		return self
-	return op.call(_value)
+	var r: Result = op.call(_value)
+	assert(r is Result, "The function `op` must return a Result but got %s" % r)
+	return r
 
-# TODO documentation
 ## Checks whether the contained value matches [param rhs]
 ## [br]i.e. checks that [code]self == Ok(rhs)[/code]
 ## [br]If this [Result] is an [code]Err[/code], this method will return [code]false[/code]
-## @experimental
 func matches(rhs: Variant) -> bool:
 	return _value == rhs and _is_ok
 
-# TODO documentation
 ## Checks whether the contained error matches [param rhs]
 ## [br]i.e. checks that [code]self == Err(rhs)[/code]
 ## [br]If this [Result] is an [code]Ok[/code], this method will return [code]false[/code]
-## @experimental
 func matches_err(rhs: Variant) -> bool:
 	return _value == rhs and !_is_ok
 
@@ -356,7 +356,7 @@ static func parse_json_file(path: String) -> Result:
 		.and_then(func(f: FileAccess):
 			# Yo why json.get_error_message() and get_error_line() always empty?
 			# Anyways, it's here just in case
-			return Result.from_gderr( json.parse(f.get_as_text()) ) .toError()\
+			return Result.from_gderr( json.parse(f.get_as_text()) ) .to_custom_error()\
 				.err_msg(json.get_error_message())\
 				.err_info('line', json.get_error_line())
 			)\

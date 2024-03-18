@@ -46,9 +46,10 @@ var _is_expired: bool = false :
 ## [codeblock]
 ## var timed = TimedVar.new("foo")
 ## 
-## await get_tree().create_timer(0.6).timeout
+## # Wait 0.6s ...
+## 
 ## print( timed.get_value() ) # Some("foo")
-## print( timed.time_ms() ) # Should print "600", but may vary slightly, of course
+## print( timed.time_ms() ) # Should print "600"
 ## [/codeblock]
 func _init(value: Variant):
 	_value = value
@@ -65,6 +66,10 @@ static func empty() -> TimedVar:
 ## Create a new [TimedVar] that will live for [param lifespan_ms]
 ## [br]This is the equivalent to doing
 ## [br][code]var timed = TimedVar.new(value) .set_lifespan(lifespan_ms)[/code]
+## [codeblock]
+## <~~~~~~~~~lifespan~~~~~~~~~>
+## (now) ---------------------> (expiration)
+## [/codeblock]
 static func with_lifespan(value: Variant, lifespan_ms: int) -> TimedVar:
 	return TimedVar.new(value) .set_lifespan(lifespan_ms)
 
@@ -83,9 +88,11 @@ func _to_string() -> String:
 ## Before calling set_lifespan():
 ##     (created) --> (now)
 ##     Or if a lifespan is already set:
-##     (created) ==> (now) =======> (lifespan)
+##     <~~~~~~~~~lifespan~~~~~~~~~>
+##     (created) --> (now) -------> (expiration)
 ## After calling set_lifespan():
-##     ------------> (created) ================> (new lifespan)
+##                   <~~~~~~~~~lifespan~~~~~~~~>
+##     ------------> (created) ----------------> (expiration)
 ##                   (now)
 ## [/codeblock]
 ## It is more common to use this method upon initialization:
@@ -97,9 +104,11 @@ func _to_string() -> String:
 ## Before:
 ##     (created) --> (now)
 ##     Or if a lifespan is already set:
-##     (created) ==> (now) =======> (lifespan)
+##     <~~~~~~~~~lifespan~~~~~~~~~>
+##     (created) --> (now) -----> (expiration)
 ## After:
-##     (created) ==> (now) ==================> (new lifespan)
+##     <~~~~~~~~~~~~lifespan~~~~~~~~~~~~~~~~~>
+##     (created) --> (now) ------------------> (expiration)
 ## [/codeblock]
 func set_lifespan(lifespan_ms: int) -> TimedVar:
 	assert(lifespan_ms > 0)

@@ -117,7 +117,7 @@ Error.new(Error.Other).msg("Oh no!")\
     .as_cause( Error.from_gderr(ERR_TIMEOUT) )
 
 # Used alongside a Result:
-Result.newError(Error.MyCustomError)
+Result.error(Error.MyCustomError)
 Result.open_file( ... ) .err_msg("Failed to open the specified file")
 ```
 

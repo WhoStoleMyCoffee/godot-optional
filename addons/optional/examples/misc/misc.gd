@@ -8,7 +8,7 @@ Note:
 	Here, they're not because we can't define statics inside functions
 """
 
-"""
+""" EXPERIMENTAL
 This example demonstrates the usage of Enums and EnumVars
 """
 func example_process():
@@ -30,7 +30,7 @@ func example_process():
 				print_console("Done!")
 				break
 
-"""
+""" EXPERIMENTAL
 This example demonstrates the usage of EnumDicts
 Notice how pet_state is a Dictionary
 """

@@ -32,7 +32,7 @@ func handling():
 		.stringify_err()\
 		.report()
 	# Using custom error handling
-	var res3: Result = Result.newError( hidden.connect(dummy_fn) )\
+	var res3: Result = Result.error( hidden.connect(dummy_fn) )\
 		.err_msg("Error while connecting signal: ")\
 		.report()
 
