@@ -28,6 +28,10 @@ split_offset = 300
 layout_mode = 2
 columns = 5
 
+[node name="Playground" type="Button" parent="VSplitContainer/GridContainer"]
+layout_mode = 2
+text = "playground"
+
 [node name="Process" type="Button" parent="VSplitContainer/GridContainer"]
 layout_mode = 2
 text = "example_process"
@@ -46,6 +50,7 @@ bbcode_enabled = true
 text = "[color=gray]Output console[/color]"
 scroll_following = true
 
+[connection signal="pressed" from="VSplitContainer/GridContainer/Playground" to="." method="_on_button_pressed" binds= ["playground"]]
 [connection signal="pressed" from="VSplitContainer/GridContainer/Process" to="." method="_on_button_pressed" binds= ["example_process"]]
 [connection signal="pressed" from="VSplitContainer/GridContainer/PetState" to="." method="_on_button_pressed" binds= ["example_pet_state"]]
 [connection signal="pressed" from="VSplitContainer/GridContainer/Combo" to="." method="_on_button_pressed" binds= ["example_combo"]]
