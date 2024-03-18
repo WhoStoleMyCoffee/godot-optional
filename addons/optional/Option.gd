@@ -8,21 +8,23 @@ class_name Option extends RefCounted
 ## func get_player_stats(id: String) -> Option:
 ##     return Option.None() # Represents a null
 ##     return Option.Some( data ) # Sucess!
-## # ...
+## 
 ## var res: Option = get_player_stats("player_3")
 ## if res.is_none():
 ##     print("Player doesn't exist!")
 ##     return
-## var data = res.expect("Already checked if None or Some above") # Safest
-## var data = res.unwrap() # Crashes if res is None. Least safe, but quick for prototyping
+## 
+## # Getting the contained value (in order of safety):
 ## var data = res.unwrap_or( 42 ) # Get from default value
 ## var data = res.unwrap_or_else( some_complex_function ) # Get default value from function
-## var data = res.unwrap_unchecked() # It's okay to use it here because we've already checked above
+## var data = res.expect("Res was None!")
+## var data = res.unwrap() # Crashes if None, but quick for prototyping
+## var data = res.unwrap_unchecked() # Least safe. It's okay to use it here because we've already checked above
 ## [/codeblock][br]
 ## [Option] also comes with a safe way to index arrays and dictionaries[br]
 ## [codeblock]
 ## var my_arr = [2, 4, 6]
-## print( Option.arr_get(1))  # Prints "4"
+## print( Option.arr_get(1))  # Prints "Some(4)"
 ## print( Option.arr_get(4))  # Prints "None" because index 4 is out of bounds
 ## [/codeblock]
 

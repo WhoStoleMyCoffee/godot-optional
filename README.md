@@ -7,8 +7,8 @@ Introduces to Godot Option, Result, and custom Error types inspired by Rust
 - [Optionals](#option) to explicitly annotate that a variable can be `null`
 - [Results](#result) to explicitly annotate that an operation can fail
 - [Custom error types](#custom-error-types) specific to your application
-- [TimedVars](#timedvar) that can delete themselves after a set amount of time
-- [EnumStructs](#enum-structs-experimental)
+- [TimedVars](#timedvar) that keep track of how long they've existed for, and can delete themselves after some time
+- [EnumStructs](#enum-structs-experimental) (Experimental)
 
 ## Option
 A generic `Option<T>`
@@ -27,18 +27,19 @@ if res.is_none():
     print("Player doesn't exist!")
     return
 
-var data = res.expect("Already checked if None or Some above")
-var data = res.unwrap() # Crashes if res is None, but quick for prototyping
+# Getting the contained value (in order of safety):
 var data = res.unwrap_or( 42 ) # Get from default value
 var data = res.unwrap_or_else( some_complex_function ) # Get default value from function
+var data = res.expect("Res was None!")
+var data = res.unwrap() # Crashes if None, but quick for prototyping
 var data = res.unwrap_unchecked() # Least safe. It's okay to use it here because we've already checked above
 ```
 
 Option also comes with a safe way to index arrays and dictionaries
 ```gdscript
 var my_arr = [2, 4, 6]
-print( Option.arr_get(1))  # Prints "4"
-print( Option.arr_get(4))  # Prints "None" because index 4 is out of bounds
+print( Option.arr_get(1) )  # Prints "Some(4)"
+print( Option.arr_get(4) )  # Prints "None" because index 4 is out of bounds
 ```
 ![](screenshots/example_attack.png)
 
@@ -53,6 +54,7 @@ In case of a failure, the `Err` variant is returned containing information about
 
 Basic usage:
 ```gdscript
+
 # By returning a Result, it's clear that this function can fail
 func my_function() -> Result:
     return Result.from_gderr(ERR_PRINTER_ON_FIRE)
@@ -67,14 +69,17 @@ if res.is_err():
     res.stringify_error() # @GlobalScope.Error to String
     # Custom errors can bear extra details. See the "Custom error types" section below
     res.err_cause(...) .err_info(...) .err_msg(...)\
-		.report()
+        .report()
     return
 
-var data = res.expect("Already checked if Err or Ok above") # Safest
+# Getting the contained value (in order of safety):
+var data = res.unwrap_or( 42 ) # Get from default value
+var data = res.unwrap_or_else( some_complex_function ) # Get default value from function
+var data = res.expect("my_function failed!")
 var data = res.unwrap() # Crashes if res is Err. Least safe, but quick for prototyping
-var data = res.unwrap_or( 42 ) # Defaults to 42
-var data = res.unwrap_or_else( some_complex_function )
 var data = res.unwrap_unchecked() # It's okay to use it here because we've already checked above
+
+print(res) # "Ok( whatever data is contained )"
 ```
 
 Result also comes with a safe way to open files and parse JSON
@@ -95,19 +100,24 @@ It also acts as a place to have a centralized list of errors specific to your ap
 Usage:
 ```gdscript
 # Can be made from a Godot error, and with optional additional details
-var myerr = Error.new(ERR_PRINTER_ON_FIRE) .cause('Not enough ink!')
-    # Or with an additional message too
+var myerr: Error = Error.new(ERR_PRINTER_ON_FIRE) .cause('Not enough ink!')
+    # Or with an additional message too!
     .msg("The printer gods demand input..")
 
 # Prints: "Printer on fire { "cause": "Not enough ink!", "msg": "The printer gods demand input.." }"
 print(myerr)
+# Push the error to the debugger
 myerr.report()
 
 # You can even nest them!
-Error.from_gderr(ERR_TIMEOUT) .cause( Error.new(Error.Other).msg("Oh no!") )
+# (These two lines do the same thing)
+Error.from_gderr(ERR_TIMEOUT)\
+    .cause( Error.new(Error.Other).msg("Oh no!") )
+Error.new(Error.Other).msg("Oh no!")\
+    .as_cause( Error.from_gderr(ERR_TIMEOUT) )
 
 # Used alongside a Result:
-Result.Err( Error.new(Error.MyCustomError) )
+Result.newError(Error.MyCustomError)
 Result.open_file( ... ) .err_msg("Failed to open the specified file")
 ```
 
@@ -131,35 +141,41 @@ Example: Creating a combo system using `TimedVar`s
 
 ```gdscript
 var combo: TimedVar = TimedVar.empty() # Combo not yet started
-print("  combo = ", combo)
+print("  combo = ", combo) # "TimedVar(<null>: alive for 0.00s)"
 
 # Player input ...
 
 # Start the combo with a slash
 print("SLASH!")
-combo.set_value("slash")\
-	.set_lifespan(1000) # 1s window for following combos
+combo = TimedVar.with_lifespan("slash", 1000)
+# Same as writing one of the following:
+combo = TimedVar.new("slash") .set_lifespan(1000)
+combo.set_value("slash") .set_lifespan(1000) # 1s window for following combos
 
+# Now, combo = TimedVar(slash: expires in 1.00s)
 # Player input ...
 
 # Follow it up with a big slash
 if combo.get_value() .matches("slash"):
 	print("BIG SLASH!")
 	combo.set_value("slash_big") # Also resets lifespan back to that 1s window we defined earlier
-# Too late! `combo` already expired, so no more follow-ups!
 else:
+    # Too late! `combo` already expired, so no more follow-ups!
 	print("No big slash")
 
+# Now, combo = TimedVar(slash_big: expires in 1.00s)
 # Player input ...
 
-# End it with 'a biggest slash', but with a tighter timing window of 0.5s
+# End it with a 'biggest slash', but with a tighter timing window of 0.5s
 # Using take() (or in this case, take_timed()) takes care of finishing the
 #  combo with no loose ends
 if combo.take_timed(500) .matches("slash_big"):
 	print("BIGGEST SLASH ULTIMATE!!!")
-# Too late! `combo` already expired, so no more follow-ups!
 else:
+    # Too late! `combo` already expired!
 	print("No biggest slash :(")
+
+# Now, combo = TimedVar::Expired
 ```
 
 ---

@@ -214,9 +214,10 @@ func get_value_timed(lifespan_ms: int) -> Option:
 
 ## Returns the contained value without any additional checks
 ## [br]Because of that, it may lead to undefined behavior
+## [br]It is suggested that you only use this if you're absolutely sure this [TimedVar] isn't expired
 ## [codeblock]
 ## var timed = TimedVar.new("foo")
-## # It's okay here because we know that timed cannot be expired
+## # It's okay here because we know that timed cannot be expired, as we just created it
 ## timed.get_value_unchecked()
 ## 
 ## if !timed.is_expired():
@@ -304,7 +305,8 @@ func is_expired() -> bool:
 
 ## Returns whether this [TimedVar] is expired without any additional checks
 ## [br]If not used properly, it may cause undefined behavior
-## [br]See also [method is_expired]
+## [br]I discourage you from using this method
+## [br]See [method is_expired] instead
 func is_expired_unchecked() -> bool:
 	return _is_expired
 

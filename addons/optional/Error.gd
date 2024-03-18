@@ -36,7 +36,9 @@ class_name Error extends RefCounted
 # You can define yours here
 # This enum is unnamed for convenience
 enum {
-	Other = ERR_PRINTER_ON_FIRE+1, ## Other error type. Below ERR_PRINTER_ON_FIRE is reserved for [enum @GlobalScope.Error]
+	# Below ERR_PRINTER_ON_FIRE is reserved for [enum @GlobalScope.Error]
+	Other = ERR_PRINTER_ON_FIRE+1, ## Other error type
+	# Used for experimental enum structs:
 	MissingParameters,
 	NotContained,
 	

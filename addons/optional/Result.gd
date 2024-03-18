@@ -47,7 +47,7 @@ static func from_gderr(err: int) -> Result:
 
 ## Constructs an [code]Err([/code] [Error] [code])[/code] with the error code [param err][br]
 ## Both [enum @GlobalScope.Error] and custom [Error] codes are allowed[br]
-## [constant @GlobalScope.OK] will result in the Ok() variant, everything else will result in Err()[br]
+## [constant @GlobalScope.OK] will result in the [code]Ok()[/code] variant, everything else will result in [code]Err()[/code][br]
 ## Also see [method toError]
 static func newError(err: int) -> Result:
 	if err == OK:	return Result.new(OK, true)

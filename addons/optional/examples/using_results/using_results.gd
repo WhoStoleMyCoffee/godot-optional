@@ -25,10 +25,11 @@ func handling():
 	var res1: Result = Result.from_gderr( hidden.connect(dummy_fn) )
 	print_console("First connect: " + str(res1))
 	
-	# The following should all fail
 	print_console("Look at the debugger console for errors!")
+	# The following should all fail:
 	# Simply using godot errors
-	var res2: Result = Result.from_gderr( hidden.connect(dummy_fn) ) .stringify_err()\
+	var res2: Result = Result.from_gderr( hidden.connect(dummy_fn) )\
+		.stringify_err()\
 		.report()
 	# Using custom error handling
 	var res3: Result = Result.newError( hidden.connect(dummy_fn) )\
@@ -42,12 +43,12 @@ This example shows the ways to use Result to safely open and parse files
 func file_open():
 	# Should fail because the file doesn't exist
 	var res1: Result = Result.open_file("res://nonexistent_file.json", FileAccess.READ)\
-		.err_msg("Failed to load file: ")
+		.err_msg("Failed to load file")
 	print_console('Result 1 (should fail) = ' + str(res1))
 	
 	# Should succeed with Ok() containing the file content
 	var res2: Result = Result.parse_json_file("res://addons/optional/examples/example_userdata.json")\
-		.err_msg("Failed to load JSON: ")
+		.err_msg("Failed to load JSON")
 	print_console('Result 2 (should succeed) = ' + str(res2))
 
 
