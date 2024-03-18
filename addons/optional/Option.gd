@@ -30,10 +30,13 @@ class_name Option extends RefCounted
 
 var _value: Variant = null
 
+## Creates a [code]Some([/code][param v][code])[/code]
+## [br][param v] must not be [code]null[/code]
 static func Some(v) -> Option:
 	assert(v != null, "Cannot assign null to an Some")
 	return Option.new(v)
 
+## Creates a [code]None[/code]
 static func None() -> Option:
 	return Option.new(null)
 
@@ -48,8 +51,10 @@ func duplicate() -> Option:
 		return Option.new(null)
 	return Option.new( _value.duplicate() )
 
-func _init(v):
-	_value = v
+## Constructor function
+## [br]Creates a [code]None[/code] if [param val] is [code]null[/code], otherwise [code]Some([/code][param val][code])[/code]
+func _init(val: Variant):
+	_value = val
 
 ## Returns [code]true[/code] if the option is a [code]Some[/code] value
 func is_some() -> bool:
@@ -319,9 +324,7 @@ func ok_or_else(err: Callable) -> Result:
 	return Result.Ok(_value)
 
 
-# ----------------------------------------------------------------
-# ** Util **
-# ----------------------------------------------------------------
+#region UTIL
 
 ## Safe version of [code]arr[idx][/code]
 static func arr_get(arr: Array, idx: int) -> Option:
@@ -335,5 +338,27 @@ static func dict_get(dict: Dictionary, key: Variant) -> Option:
 		return Option.new(null)
 	return Option.new(dict[key])
 
+## @deprecated
+## Please use [method Node.get_node_or_null]
 static func get_node(parent: Node, path: NodePath) -> Option:
 	return Option.new(parent.get_node_or_null(path))
+
+
+## Converts this [Option] into a Dictionary for serialization
+## [br]See [method from_dict]
+func to_dict() -> Dictionary:
+	if _value == null:
+		return { "None": false }
+	return { "Some": _value }
+
+## Deserializes a Dictionary into an Option
+## [br][param dict] must have either of [code]"Some": Variant[/code] or [code]"None"[/code], but not both, in which case it will return [Result][code].Err(ERR_INVALID_DATA)[/code]
+## [br]See [method to_dict]
+static func from_dict(dict: Dictionary) -> Result:
+	if dict.has("Some") != dict.has("None") and dict.size() == 1:
+		return Result.Err(ERR_INVALID_DATA)
+	# At this point, it's guaranteed dict is either "Some" or "None"
+	# just trust me bro
+	return Result.Ok(Option.new( dict.get("Some", null) ))
+
+#endregion
