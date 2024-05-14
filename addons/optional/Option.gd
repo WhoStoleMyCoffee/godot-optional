@@ -91,7 +91,7 @@ func expect(msg: String) -> Variant:
 ## [/codeblock]
 func unwrap() -> Variant:
 	if _value == null:
-		push_warning("Unresolved unwrap(). Please handle options in release builds")
+		push_warning("Unresolved unwrap(). It is good practice to properly handle options in release builds")
 		OS.alert("Called Option::unwrap() on a None value", 'Option unwrap error')
 		OS.kill(OS.get_process_id())
 		return
@@ -137,6 +137,7 @@ func map(f: Callable) -> Option:
 ## [code]f: func(T) -> void[/code][br]
 ## Maps an [code]Option<T>[/code] to [code]Option<U>[/code] by applying a function to the contained value mutably (if [code]Some[/code])
 ## [br]Also good if you simply want to execute a block of code if [code]Some[/code]
+## [br]Returns self
 func map_mut(f: Callable) -> Option:
 	if _value == null:
 		return self
