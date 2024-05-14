@@ -42,13 +42,14 @@ static func Err(err) -> Result:
 
 ## Constructs a [Result] from the global [enum @GlobalScope.Error] enum[br]
 ## [constant @GlobalScope.OK] will result in the Ok() variant, everything else will result in Err()
-static func from_gderr(err: int) -> Result:
+static func GDErr(err: int) -> Result:
 	return Result.new(err, err == OK)
 
 ## Constructs an [code]Err([/code] [Error] [code])[/code] with the error code [param err][br]
 ## Both [enum @GlobalScope.Error] and custom [Error] codes are allowed[br]
 ## [constant @GlobalScope.OK] will result in the [code]Ok()[/code] variant, everything else will result in [code]Err()[/code][br]
 ## Also see [method to_custom_error]
+## [br]I wanted to call this "Error" so it's consistent with other methods (Ok(), Err(), GDErr()), but that wasn't possible...
 static func error(err: int) -> Result:
 	if err == OK:	return Result.new(OK, true)
 	return Result.new(Error.new(err), false)
@@ -109,17 +110,13 @@ func map_mut(f: Callable) -> Result:
 ## [code]f: func(T) -> U[/code][br]
 ## Returns the provided default if Err, or applies a function to the contained value if Ok.
 func map_or(default: Variant, f: Callable) -> Variant:
-	if !_is_ok:
-		return default
-	return f.call(_value)
+	return f.call(_value) if is_ok else default
 
 ## [code]default: func(E) -> U[/code][br]
 ## [code]f: func(T) -> U[/code][br]
 ## Same as [method map_or] but computes the default (if Err) from a function
 func map_or_else(default: Callable, f: Callable) -> Variant:
-	if _is_ok:
-		return f.call(_value)
-	return default.call(_value)
+	return f.call(_value) if _is_ok else default.call(_value)
 
 ## [code]op: func(E) -> F[/code][br]
 ## Maps a [code]Result<T, E>[/code] to [code]Result<T, F>[/code] by applying a function to a contained Err value, leaving an Ok value untouched[br]
@@ -330,9 +327,7 @@ func matches_err(rhs: Variant) -> bool:
 	return _value == rhs and !_is_ok
 
 
-# ----------------------------------------------------------------
-# ** Util **
-# ----------------------------------------------------------------
+#region Util
 
 ## Open a file safely and return the result[br]
 ## Returns [code]Result<FileAccess, Error>[/code][br]
@@ -356,9 +351,10 @@ static func parse_json_file(path: String) -> Result:
 		.and_then(func(f: FileAccess):
 			# Yo why json.get_error_message() and get_error_line() always empty?
 			# Anyways, it's here just in case
-			return Result.from_gderr( json.parse(f.get_as_text()) ) .to_custom_error()\
+			return Result.GDErr( json.parse(f.get_as_text()) ) .to_custom_error()\
 				.err_msg(json.get_error_message())\
 				.err_info('line', json.get_error_line())
 			)\
 		.map(func(__):	return json.data)
 
+#endregion

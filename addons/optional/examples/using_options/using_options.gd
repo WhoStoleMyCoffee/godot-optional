@@ -50,8 +50,8 @@ func weapon_durability():
 			print_console( str(old_weapon.id) + ' broke!' )
 			)
 	print_console('weapon = ' + str(weapon))
-	# If you want to do further handling with the broken weapon:
-	# var old_weapon: Option = weapon. (...) .take()
+	# Instead, if you want to do further handling with the broken weapon:
+	# var old_weapon: Option = weapon.map_mut ... .take()
 
 
 """
@@ -75,6 +75,67 @@ func array_get():
 	print_console( arrget.call(1) ) # Some
 	print_console( arrget.call(2) ) # Some
 	print_console( arrget.call(3) ) # None!
+
+
+"""
+This example demonstrates the usage of:
+- Option::to_dict()
+- Option::from_dict()
+"""
+func serialization():
+	var pet_name: Option = Option.Some("Buster")
+	var pet_name_dict: Dictionary = pet_name.to_dict()
+	print_console("pet_name = %s" % pet_name)
+	print_console("pet_name_dict = %s" % pet_name_dict)
+	
+	var loaded_pet_name: Result = Option.from_dict(pet_name_dict)
+	print_console("loaded_pet_name = %s" % loaded_pet_name)
+	
+	var invalid: Result = Option.from_dict({
+		"invalid_data": 12,
+		"None": 0,
+		"Some": "Rick"
+	}) .stringify_err()
+	print_console("invalid = %s" % invalid)
+
+
+"""
+This example demonstrates ways to handle Options
+"""
+func matching():
+	var list: Option = Option.Some([
+		"apples",
+		"bananas",
+		"milk",
+	])
+	print_console(" list = %s" % list)
+	
+	print_console("\nGoing shopping...")
+	# Let's take `list`, leaving a None in its place
+	var taken_list: Option = list.take()\
+		# And add "bread"
+		.map_mut(func(arr: Array):
+			print_console("(Whoops, forgot to add bread!)")
+			arr.append("bread")
+			)
+	print_console(" list = %s" % list)
+	print_console(" taken_list = %s" % taken_list)
+	
+	if taken_list.is_some_and(func(arr: Array):	return arr.size() > 3):
+		print_console("Shopping list is too long!")
+		# It's okay to use unwrap_unchecked() here because we already
+		# checked if it's Some
+		print_console(" taken_list size = %s" % taken_list.unwrap_unchecked().size() )
+	
+	# Doing things this way isn't necessary
+	# It's just for showcasing purposes...
+	# Basically, we leave out only "milk"
+	taken_list = taken_list.map(func(arr: Array):
+		return arr.filter(func(str: String):	return str == "milk")
+		)
+	
+	if taken_list.matches([ "milk" ]):
+		print_console("Couldn't find only milk...")
 
 
 func print_console(string: String):

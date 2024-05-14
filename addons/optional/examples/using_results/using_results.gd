@@ -7,8 +7,7 @@ This example shows you how to effectively use Results and Errors
 Note:
 	If you're in a context where performance matters more than anything,
 	you may want to opt for conventional error handling
-
-Note:
+	
 	I highly recommend reading through the generated documentation (F1 help)
 	for Result and Error
 """
@@ -22,13 +21,13 @@ func handling():
 	var dummy_fn: Callable = func():
 		print('Dummy func called!')
 	
-	var res1: Result = Result.from_gderr( hidden.connect(dummy_fn) )
+	var res1: Result = Result.GDErr( hidden.connect(dummy_fn) )
 	print_console("First connect: " + str(res1))
 	
 	print_console("Look at the debugger console for errors!")
 	# The following should all fail:
 	# Simply using godot errors
-	var res2: Result = Result.from_gderr( hidden.connect(dummy_fn) )\
+	var res2: Result = Result.GDErr( hidden.connect(dummy_fn) )\
 		.stringify_err()\
 		.report()
 	# Using custom error handling

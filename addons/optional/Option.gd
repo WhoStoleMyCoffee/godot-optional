@@ -43,7 +43,7 @@ static func None() -> Option:
 func _to_string() -> String:
 	if _value == null:
 		return 'None'
-	return 'Some(%s)' % _value
+	return 'Some(%s)' % str(_value)
 
 ## Creates a duplicate with the inner value duplicated as well
 func duplicate() -> Option:
@@ -139,9 +139,8 @@ func map(f: Callable) -> Option:
 ## [br]Also good if you simply want to execute a block of code if [code]Some[/code]
 ## [br]Returns self
 func map_mut(f: Callable) -> Option:
-	if _value == null:
-		return self
-	f.call(_value)
+	if _value != null:
+		f.call(_value)
 	return self
 
 ## [code]default: U[/code][br]
@@ -155,8 +154,8 @@ func map_mut(f: Callable) -> Option:
 ## print( x.map_or(42, func(v):    return v.length()) ) # Prints 42
 ## [/codeblock]
 func map_or(default, f: Callable) -> Variant:
+	assert(default != null, "The default value must not be `null`")
 	if _value == null:
-		assert(default != null, "The default value must not be `null`")
 		return default
 	var u: Variant = f.call(_value)
 	assert(u != null, "The function `f` must not return `null`")
@@ -282,13 +281,38 @@ func replace(value) -> Option:
 	_value = value
 	return old
 
-## Converts [code]Option<Option<T>>[/code] to [code]Option<T>[/code][br]
+## Converts [code]Option<Option<T>>[/code] to [code]Option<T>[/code]
+## Example:
+## [codeblock]
+## var x = Option.Some(Option.Some(42))
+## print( x.flatten() ) # Some(42)
+## 
+## var x = Option.Some(Option.None())
+## print( x.flatten() ) # None
+## 
+## var x = Option.None()
+## print( x.flatten() ) # None
+## [/codeblock]
 func flatten() -> Option:
 	if _value == null or !(_value is Option):
 		return self
 	return _value
 
 ## [param predicate]: [code]func(T) -> bool[/code]
+## [br]Returns [code]None[/code] if the option is [code]None[/code], otherwise calls [param predicate] with the wrapped value and returns:
+## [br] - [code]Some(t)[/code] if predicate returns true (where t is the wrapped value)
+## [br] - [code]None[/code] if predicate returns false.
+## [br]
+## Example:
+## [codeblock]
+## var is_even = func(n: int) -> bool:
+##     return n % 2 == 0
+## 
+## assert( Option.None()  .filter(is_even) .is_none() )
+## assert( Option.Some(3) .filter(is_even) .is_none() )
+## assert( Option.Some(4) .filter(is_even) .matches(4) )
+## [/codeblock]
+## See also [method matches]
 func filter(predicate: Callable) -> Option:
 	if _value == null:
 		return self
@@ -309,8 +333,28 @@ func typed(type: Variant.Type) -> Option:
 ## Checks whether the contained value matches [param rhs]
 ## [br]i.e. checks that [code]self == Some(rhs)[/code]
 ## [br]If this [Option] is a [code]None[/code], this method will return [code]false[/code]
+## [br]This is a shorthand for
+## [code].is_some_and(func(value): value == rhs)[/code]
+## [br](See [method is_some_and])
 func matches(rhs: Variant) -> bool:
 	return _value == rhs and _value != null
+
+## [code]f: func(T) -> bool[/code][br]
+## Returns true if the [Option] is [code]Some[/code] and the value inside matches the predicate
+## Example:
+## [codeblock]
+## var x = Option.Some(2)
+## assert( x.is_some_and(func(x):	return x > 1) == true)
+## 
+## var x = Option.Some(0)
+## assert( x.is_some_and(func(x):	return x > 1) == false)
+## 
+## var x = Option.None()
+## assert( x.is_some_and(func(x):	return x > 1) == false)
+## [/codeblock]
+## To check whether the contained value matches another, see [method matches]
+func is_some_and(f: Callable) -> bool:
+	return _value != null and f.call(_value)
 
 ## Transforms the [Option][code]<T>[/code] into a [Result][code]<T, err>[/code]
 func ok_or(err: Variant) -> Result:
@@ -335,13 +379,12 @@ static func arr_get(arr: Array, idx: int) -> Option:
 
 ## Safe version of [code]dict[key][/code]
 static func dict_get(dict: Dictionary, key: Variant) -> Option:
-	if !dict.has(key):
-		return Option.new(null)
-	return Option.new(dict[key])
+	return Option.new( dict.get(key, null) )
 
 ## @deprecated
 ## Please use [method Node.get_node_or_null]
 static func get_node(parent: Node, path: NodePath) -> Option:
+	push_warning("Use of deprecated method Option.get_node(). Please use Node.get_node_or_null()")
 	return Option.new(parent.get_node_or_null(path))
 
 
@@ -356,7 +399,7 @@ func to_dict() -> Dictionary:
 ## [br][param dict] must have either of [code]"Some": Variant[/code] or [code]"None"[/code], but not both, in which case it will return [Result][code].Err(ERR_INVALID_DATA)[/code]
 ## [br]See [method to_dict]
 static func from_dict(dict: Dictionary) -> Result:
-	if dict.has("Some") != dict.has("None") and dict.size() == 1:
+	if dict.has("Some") == dict.has("None") or dict.size() != 1:
 		return Result.Err(ERR_INVALID_DATA)
 	# At this point, it's guaranteed dict is either "Some" or "None"
 	# just trust me bro

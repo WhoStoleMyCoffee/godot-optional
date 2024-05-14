@@ -36,6 +36,14 @@ text = "weapon_durability"
 layout_mode = 2
 text = "array_get"
 
+[node name="Serde" type="Button" parent="VSplitContainer/GridContainer"]
+layout_mode = 2
+text = "serialization"
+
+[node name="Matching" type="Button" parent="VSplitContainer/GridContainer"]
+layout_mode = 2
+text = "matching"
+
 [node name="RichTextLabel" type="RichTextLabel" parent="VSplitContainer"]
 layout_mode = 2
 bbcode_enabled = true
@@ -44,3 +52,5 @@ scroll_following = true
 
 [connection signal="pressed" from="VSplitContainer/GridContainer/WeaponDur" to="." method="_on_button_pressed" binds= ["weapon_durability"]]
 [connection signal="pressed" from="VSplitContainer/GridContainer/ArrayGet" to="." method="_on_button_pressed" binds= ["array_get"]]
+[connection signal="pressed" from="VSplitContainer/GridContainer/Serde" to="." method="_on_button_pressed" binds= ["serialization"]]
+[connection signal="pressed" from="VSplitContainer/GridContainer/Matching" to="." method="_on_button_pressed" binds= ["matching"]]
