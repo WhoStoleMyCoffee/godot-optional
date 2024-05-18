@@ -1,0 +1,23 @@
+[gd_scene load_steps=2 format=3 uid="uid://c2t5o4ds6aq51"]
+
+[ext_resource type="Script" path="res://addons/optional/examples/examples.gd" id="1_wak6t"]
+
+[node name="Examples" type="VBoxContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_wak6t")
+
+[node name="RichTextLabel" type="RichTextLabel" parent="."]
+layout_mode = 2
+text = "text"
+fit_content = true
+
+[node name="HSeparator" type="HSeparator" parent="."]
+layout_mode = 2
+
+[node name="GridContainer" type="GridContainer" parent="."]
+layout_mode = 2
+columns = 5

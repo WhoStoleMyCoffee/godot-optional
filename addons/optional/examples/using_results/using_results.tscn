@@ -45,7 +45,3 @@ layout_mode = 2
 bbcode_enabled = true
 text = "[color=gray]Output console[/color]"
 scroll_following = true
-
-[connection signal="pressed" from="VSplitContainer/GridContainer/Handling" to="." method="_on_button_pressed" binds= ["handling"]]
-[connection signal="pressed" from="VSplitContainer/GridContainer/FileOpen" to="." method="_on_button_pressed" binds= ["file_open"]]
-[connection signal="pressed" from="VSplitContainer/GridContainer/CustomError" to="." method="_on_button_pressed" binds= ["custom_errors"]]

@@ -19,19 +19,19 @@ These are way cleaner than spamming uninsightful errors in the console
 """
 func handling():
 	var dummy_fn: Callable = func():
-		print('Dummy func called!')
+		pass
 	
-	var res1: Result = Result.GDErr( hidden.connect(dummy_fn) )
+	var res1: Result = Result.from_gderr( hidden.connect(dummy_fn) )
 	print_console("First connect: " + str(res1))
 	
 	print_console("Look at the debugger console for errors!")
 	# The following should all fail:
 	# Simply using godot errors
-	var res2: Result = Result.GDErr( hidden.connect(dummy_fn) )\
-		.stringify_err()\
+	var res2: Result = Result.from_gderr( hidden.connect(dummy_fn) )\
+		.gderror_to_string()\
 		.report()
 	# Using custom error handling
-	var res3: Result = Result.error( hidden.connect(dummy_fn) )\
+	var res3: Result = Result.from_gderr( hidden.connect(dummy_fn) )\
 		.err_msg("Error while connecting signal: ")\
 		.report()
 
@@ -56,22 +56,29 @@ This example shows the usage of custom Errors and reporting
 Right now, all reports are pused as errors, but I might add methods to 
  push them as warnings in the future.
 """
+enum CustomError {
+	NODE_NOT_FOUND=10,
+	# ...
+}
+
+"""
 func custom_errors():
 	# Custom error types specific to your application!
-	Result.Err(Error.new( Error.ExampleError ))
+	Result.Err(Error.new( Error.EXAMPLE_ERROR ))
 	# Also supports Godot errors!
 	Result.Err(Error.new( ERR_ALREADY_EXISTS ))
 	
 	print_console("Look at the debugger console for errors!")
 	# You can also add a message, cause, and additional info to help with debugging
-	Result.Err(Error.new( Error.ExampleError ))\
+	Result.Err(Error.new( Error.EXAMPLE_ERROR ))\
 		.err_info('path', 'path_to_file...')\
 		# Useful if you have chains of Results dependant on each other
 		.err_cause( error_string(ERR_FILE_CANT_WRITE) )\
 		.err_msg("Testing error reporting: ")\
 		.report()
 	# Result::err_info(), err_cause(), err_as_cause(), err_msg(), and report() are actually
-	# wrappers of Error methods
+	# wrappers of Error methods with the same name
+"""
 
 
 func print_console(string: String):

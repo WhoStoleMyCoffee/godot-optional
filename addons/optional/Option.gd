@@ -90,12 +90,11 @@ func expect(msg: String) -> Variant:
 ## var will_fail = Option.None() .unwrap() # Fails
 ## [/codeblock]
 func unwrap() -> Variant:
-	if _value == null:
-		push_warning("Unresolved unwrap(). It is good practice to properly handle options in release builds")
-		OS.alert("Called Option::unwrap() on a None value", 'Option unwrap error')
-		OS.kill(OS.get_process_id())
-		return
-	return _value
+	if _value != null:
+		return _value
+	push_warning("Unresolved unwrap(). It is good practice to properly handle options in release builds")
+	Report.crash("Called Option::unwrap() on a None")
+	return
 
 ## Returns the contained [code]Some[/code] value or a provided default[br]
 ## Example: [codeblock]
@@ -138,7 +137,7 @@ func map(f: Callable) -> Option:
 ## Maps an [code]Option<T>[/code] to [code]Option<U>[/code] by applying a function to the contained value mutably (if [code]Some[/code])
 ## [br]Also good if you simply want to execute a block of code if [code]Some[/code]
 ## [br]Returns self
-func map_mut(f: Callable) -> Option:
+func call_some(f: Callable) -> Option:
 	if _value != null:
 		f.call(_value)
 	return self

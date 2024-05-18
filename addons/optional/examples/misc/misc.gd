@@ -15,6 +15,15 @@ PLAYGROUND FOR TESTING
 func playground():
 	print_console("See the function `func playground()`")
 	print_console("Use `print_console` to print to this console!")
+	
+	var res1 = Result.parse_json_file("res://addons/optional/examples/example_userdata.json")\
+		.map_err_mut(func(report: Report):
+			report.gderror_to_string()
+			)
+	print(res1)
+	
+	var res2 = Result.parse_json_file("res://addons/optional/examples/nope.json")
+	print(res2)
 
 
 """

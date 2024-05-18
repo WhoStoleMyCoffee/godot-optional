@@ -42,17 +42,8 @@ static func Err(err) -> Result:
 
 ## Constructs a [Result] from the global [enum @GlobalScope.Error] enum[br]
 ## [constant @GlobalScope.OK] will result in the Ok() variant, everything else will result in Err()
-static func GDErr(err: int) -> Result:
+static func from_gderr(err: int) -> Result:
 	return Result.new(err, err == OK)
-
-## Constructs an [code]Err([/code] [Error] [code])[/code] with the error code [param err][br]
-## Both [enum @GlobalScope.Error] and custom [Error] codes are allowed[br]
-## [constant @GlobalScope.OK] will result in the [code]Ok()[/code] variant, everything else will result in [code]Err()[/code][br]
-## Also see [method to_custom_error]
-## [br]I wanted to call this "Error" so it's consistent with other methods (Ok(), Err(), GDErr()), but that wasn't possible...
-static func error(err: int) -> Result:
-	if err == OK:	return Result.new(OK, true)
-	return Result.new(Error.new(err), false)
 
 func _to_string() -> String:
 	if _is_ok:
@@ -101,7 +92,7 @@ func map(op: Callable) -> Result:
 ## [code]f: func(T) -> void[/code][br]
 ## Maps a [code]Result<T, E>[/code] to [code]Result<U, E>[/code] by applying a function to the contained value mutably (if [code]Ok[/code])
 ## [br]Also good if you simply want to execute a block of code if [code]Ok[/code]
-func map_mut(f: Callable) -> Result:
+func call_ok(f: Callable) -> Result:
 	if !_is_ok:	return self
 	f.call(_value)
 	return self
@@ -136,81 +127,16 @@ func map_err(op: Callable) -> Result:
 ## [code]f: func(E) -> void[/code][br]
 ## Maps a [code]Result<T, E>[/code] to [code]Result<T, F>[/code] by applying a function to the contained error mutably (if [code]Err[/code])
 ## [br]Also good if you simply want to execute a block of code if [code]Err[/code]
-func map_err_mut(f: Callable) -> Result:
+func call_err(f: Callable) -> Result:
 	if _is_ok:	return self
 	f.call(_value)
 	return self
 
-## Turns a [code]Result<_, @GlobalScope.Error>[/code] into a [code]Result<_, String>[/code][br]
-## This is similar to doing the following but safer
-## [codeblock]
-## result.map_err(func(err: int):	return error_string(err))
-## [/codeblock]
-## See also [enum @GlobalScope.Error], [method @GlobalScope.error_string]
-func stringify_err() -> Result:
-	if _is_ok or typeof(_value) != TYPE_INT:	return self
+# TODO option to stfu
+func gderror_to_string() -> Result:
+	if _is_ok or !(_value is int):
+		return self
 	_value = error_string(_value)
-	return self
-
-## Converts this [code]Err([/code][enum @GlobalScope.Error][code])[/code] into [code]Err([/code][Error][code])[/code], and returns [code]self[/code][br]
-## This is similar to doing the following but safer
-## [codeblock]
-## result.map_err(Error.new)
-## [/codeblock]
-## Also see [method error]
-func to_custom_error() -> Result:
-	if _is_ok or typeof(_value) != TYPE_INT:	return self
-	_value = Error.new(_value)
-	return self
-
-## Set the message to show when converting to string or printing if this is an [code]Err[/code]
-## This is similar to doing
-## [codeblock]
-## result.map_err(func(err: Error): return err.msg(message))
-## [/codeblock]
-## See also [method to_custom_error], [method err_cause], [method err_info], [method Error.msg]
-func err_msg(message: String) -> Result:
-	if _is_ok or !(_value is Error):	return self
-	_value.message = message # Error.msg(message) expanded
-	return self
-
-## Calls [method Error.cause] if this is an [code]Err([/code][Error][code])[/code][br]
-## This is similar to doing
-## [codeblock]
-## result.map_err(func(err: Error): return err.cause(cause))
-## [/codeblock]
-## See also [method to_custom_error], [method err_msg], [method err_info], [method Error.cause]
-func err_cause(cause: Variant) -> Result:
-	if _is_ok or !(_value is Error):	return self
-	_value.details.cause = cause # Error.cause(cause) expanded
-	return self
-
-## Calls [method Error.as_cause_mut] if this is an [code]Err([/code][Error][code])[/code][br]
-## This is similar to doing
-## [codeblock]
-## result.map_err_mut(func(err: Error):    err.as_cause_mut(type))
-## [/codeblock]
-## See also [method err_cause], [method Error.cause], [method Error.as_cause]
-func err_as_cause(err: int) -> Result:
-	if _is_ok or !(_value is Error):	return self
-	# Error::as_cause_mut() expanded
-	var inner: Error = Error.new(_value.type, _value.details)
-	inner.message = _value.message
-	
-	_value.type = err
-	_value.details = { 'cause' : inner }
-	_value.message = ''
-	return self
-
-## Calls [method Error.info] if this is an [code]Err([/code][Error][code])[/code][br]
-## This is similar to doing
-## [codeblock]
-## result.map_err(func(err: Error): return err.info(key, value))
-## [/codeblock]
-## See also [method to_custom_error], [method err_msg], [method err_cause], [method Error.info]
-func err_info(key: String, value: Variant) -> Result:
-	if _is_ok or !(_value is Error):	return self
-	_value.details[key] = value # Error.info(key, value) expanded
 	return self
 
 ## Returns the contained [code]Ok[/code] value[br]
@@ -224,6 +150,7 @@ func err_info(key: String, value: Variant) -> Result:
 ## var will_fail = Result.Err("Oh no!")\
 ##     .expect("This fails!")
 ## [/codeblock]
+## Internally, this method uses [code]assert()[/code], so it will be optimized away in release builds
 func expect(msg: String) -> Variant:
 	assert(_is_ok, msg + ': ' + str(_value))
 	return _value
@@ -244,21 +171,24 @@ func expect_err(msg: String) -> Variant:
 ## var will_fail = Result.Err("Oh no!") .unwrap() # Fails
 ## [/codeblock]
 func unwrap() -> Variant:
-	if !_is_ok:
-		push_warning("Unresolved unwrap(). Please handle results in release builds")
-		OS.alert("Called Result::unwrap() on an Err. value:\n %s" % _value, 'Result unwrap error')
-		OS.kill(OS.get_process_id())
-		return
-	return _value
+	if _is_ok:
+		return _value
+	
+	push_warning("Unresolved unwrap(). It is good practice to properly handle results in release builds")
+	if _value is Report:
+		_value.report(Report.LogLevel.CRASH)
+	else:
+		Report.crash("Called Result::unwrap() on an Err.\n value: %s" % str(_value))
+	return
 
 ## Same as [method unwrap] but panics in case of an Ok
 func unwrap_err() -> Variant:
-	if _is_ok:
-		push_warning("Unresolved unwrap_err(). Please handle results in release builds")
-		OS.alert("Called Result::unwrap_err() on an Ok. value:\n %s" % _value, 'Result unwrap error')
-		OS.kill(OS.get_process_id())
-		return
-	return _value
+	if !_is_ok:
+		return _value
+	
+	push_warning("Unresolved unwrap_err(). It is good practice to properly handle results in release builds")
+	Report.crash("Called Result::unwrap_err() on an Ok.\n value: %s" % _value)
+	return
 
 ## Returns the contained Ok value or a provided default
 func unwrap_or(default: Variant) -> Variant:
@@ -279,11 +209,28 @@ func unwrap_or_else(op: Callable) -> Variant:
 func unwrap_unchecked() -> Variant:
 	return _value
 
-## Pushes this error to the built-in debugger and OS terminal (if this result is an Err(_))
-func report() -> Result:
+func report(log_level: Report.LogLevel = Report.LogLevel.ERROR) -> Result:
 	if _is_ok:	return self
-	push_error(str(_value))
+	if _value is Report:
+		_value.report(log_level)
+	else:
+		_value = Report.new(_value) .report(log_level)
 	return self
+
+# TODO refactor ig
+func as_report(f: Callable = Callable()) -> Result:
+	if _is_ok:	return self
+	if _value is Report:
+		if !f.is_null():
+			_value = f.call(_value)
+		return self
+	
+	if f.is_null():
+		_value = Report.new(_value)
+	else:
+		_value = f.call(Report.new(_value))
+	return self
+
 
 ## [code]op: func(T) -> Result<U, E>[/code][br]
 ## Does nothing if the result is Err. If Ok, calls [code]op[/code] with the contained value and returns the result[br]
@@ -335,7 +282,9 @@ func matches_err(rhs: Variant) -> bool:
 static func open_file(path: String, flags: FileAccess.ModeFlags) -> Result:
 	var f = FileAccess.open(path, flags)
 	if f == null:
-		return Result.Err( Error.new(FileAccess.get_open_error()) .info('path', path) )
+		return Result.Err( Report.new(FileAccess.get_open_error())
+			.info('path', path)
+			)
 	return Result.Ok(f)
 
 ## Open and parse the given file as JSON[br]
@@ -349,11 +298,11 @@ static func parse_json_file(path: String) -> Result:
 	var json: JSON = JSON.new()
 	return Result.open_file(path, FileAccess.READ)\
 		.and_then(func(f: FileAccess):
-			# Yo why json.get_error_message() and get_error_line() always empty?
-			# Anyways, it's here just in case
-			return Result.GDErr( json.parse(f.get_as_text()) ) .to_custom_error()\
-				.err_msg(json.get_error_message())\
-				.err_info('line', json.get_error_line())
+			return Result.from_gderr( json.parse(f.get_as_text()) )\
+				.as_report(func(r: Report):
+					return r.msg( json.get_error_message() )\
+						.info("line", json.get_error_line())
+					)
 			)\
 		.map(func(__):	return json.data)
 
