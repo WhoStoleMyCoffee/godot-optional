@@ -12,7 +12,9 @@ script = ExtResource("1_wak6t")
 
 [node name="RichTextLabel" type="RichTextLabel" parent="."]
 layout_mode = 2
-text = "text"
+bbcode_enabled = true
+text = "You can write your own tests simply by creating a function in [code]examples.gd[/code]
+The method must start with either `example_`, `demo_`, or `test_`"
 fit_content = true
 
 [node name="HSeparator" type="HSeparator" parent="."]

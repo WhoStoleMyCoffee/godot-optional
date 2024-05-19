@@ -137,7 +137,10 @@ func map(f: Callable) -> Option:
 ## Maps an [code]Option<T>[/code] to [code]Option<U>[/code] by applying a function to the contained value mutably (if [code]Some[/code])
 ## [br]Also good if you simply want to execute a block of code if [code]Some[/code]
 ## [br]Returns self
-func call_some(f: Callable) -> Option:
+## i wanted to call it call() but i guess not
+## TODO rename to if_some() ?
+## @experimental
+func if_some(f: Callable) -> Option:
 	if _value != null:
 		f.call(_value)
 	return self

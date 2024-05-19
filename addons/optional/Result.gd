@@ -61,9 +61,17 @@ func _init(v, is_ok: bool):
 func is_ok() -> bool:
 	return _is_ok
 
+## TODO documentation
+func is_ok_and(f: Callable) -> bool:
+	return _is_ok and f.call(_value)
+
 ## Returns true if the result if Err
 func is_err() -> bool:
 	return !_is_ok
+
+## TODO documentation
+func is_err_and(f: Callable) -> bool:
+	return !_is_ok and f.call(_value)
 
 ## Converts from [Result][code]<T, E>[/code] to [Option][code]<T>[/code]
 func ok() -> Option:
@@ -92,7 +100,7 @@ func map(op: Callable) -> Result:
 ## [code]f: func(T) -> void[/code][br]
 ## Maps a [code]Result<T, E>[/code] to [code]Result<U, E>[/code] by applying a function to the contained value mutably (if [code]Ok[/code])
 ## [br]Also good if you simply want to execute a block of code if [code]Ok[/code]
-func call_ok(f: Callable) -> Result:
+func if_ok(f: Callable) -> Result:
 	if !_is_ok:	return self
 	f.call(_value)
 	return self
@@ -127,7 +135,7 @@ func map_err(op: Callable) -> Result:
 ## [code]f: func(E) -> void[/code][br]
 ## Maps a [code]Result<T, E>[/code] to [code]Result<T, F>[/code] by applying a function to the contained error mutably (if [code]Err[/code])
 ## [br]Also good if you simply want to execute a block of code if [code]Err[/code]
-func call_err(f: Callable) -> Result:
+func if_err(f: Callable) -> Result:
 	if _is_ok:	return self
 	f.call(_value)
 	return self
@@ -271,7 +279,7 @@ func matches(rhs: Variant) -> bool:
 ## [br]i.e. checks that [code]self == Err(rhs)[/code]
 ## [br]If this [Result] is an [code]Ok[/code], this method will return [code]false[/code]
 func matches_err(rhs: Variant) -> bool:
-	return _value == rhs and !_is_ok
+	return !_is_ok and (_value == _value.err if _value is Report else _value == rhs)
 
 
 #region Util
