@@ -392,7 +392,7 @@ static func get_node(parent: Node, path: NodePath) -> Option:
 ## [br]See [method from_dict]
 func to_dict() -> Dictionary:
     if _value == null:
-    return { "dict_type": "option.none" }
+    	return { "dict_type": "option.none" }
 
 	var value := _value
 	if value is Object and value.has_method("to_dict"):
