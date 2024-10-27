@@ -59,8 +59,8 @@ func _to_string() -> String:
 		return 'Ok(%s)' % _value
 	return 'Err(%s)' % _value
 
-func duplicate() -> Result:
-	return Result.new(_value.duplicate(), _is_ok)
+func duplicate(deep=false) -> Result:
+	return Result.new(_value.duplicate(deep), _is_ok)
 
 func _init(v, is_ok: bool):
 	_value = v
