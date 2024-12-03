@@ -1,0 +1,8 @@
+TODO
+
+report or result.as_cause_of()
+
+we got option.ok_or / ok_or_else
+how bout option.err_or / err_or_else
+
+result.Report(value, builder_fn: Callable)

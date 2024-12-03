@@ -133,13 +133,18 @@ func map(f: Callable) -> Option:
 		return self
 	return Option.new( f.call(_value) )
 
+# i wanted to call it call() but i guess not
 ## [code]f: func(T) -> void[/code][br]
-## Maps an [code]Option<T>[/code] to [code]Option<U>[/code] by applying a function to the contained value mutably (if [code]Some[/code])
-## [br]Also good if you simply want to execute a block of code if [code]Some[/code]
+## Calls the function [param f] if [code]Some[/code], does nothing if [code]None[/code]
 ## [br]Returns self
-## i wanted to call it call() but i guess not
-## TODO rename to if_some() ?
-## @experimental
+## [codeblock]
+## var opt = Option.Some("hello")\
+##     .if_some(func(str):	print(str))
+## 
+## # Same as doing this
+## if opt.is_some():
+##     print( opt.unwrap_unchecked() )
+## [/codeblock]
 func if_some(f: Callable) -> Option:
 	if _value != null:
 		f.call(_value)
@@ -346,13 +351,13 @@ func matches(rhs: Variant) -> bool:
 ## Example:
 ## [codeblock]
 ## var x = Option.Some(2)
-## assert( x.is_some_and(func(x):	return x > 1) == true)
+## assert( x.is_some_and(func(x):  return x > 1) == true)
 ## 
 ## var x = Option.Some(0)
-## assert( x.is_some_and(func(x):	return x > 1) == false)
+## assert( x.is_some_and(func(x):  return x > 1) == false)
 ## 
 ## var x = Option.None()
-## assert( x.is_some_and(func(x):	return x > 1) == false)
+## assert( x.is_some_and(func(x):  return x > 1) == false)
 ## [/codeblock]
 ## To check whether the contained value matches another, see [method matches]
 func is_some_and(f: Callable) -> bool:

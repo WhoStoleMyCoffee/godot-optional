@@ -19,6 +19,7 @@ PLAYGROUND FOR TESTING
 func demo_playground():
 	print("Write your own tests here!")
 
+
 #region Using TimedVars
 
 """
@@ -287,9 +288,8 @@ func example_file_open():
 	
 	# `example_userdata_erroneous.json`
 	var res3: Result = Result.parse_json_file("res://addons/optional/examples/example_userdata_erroneous.json")\
-		.map_err(func(r: Report):
-			return r.gderror_to_string()
-			)
+			# .gderror_to_string() also works with Err(Report)
+			.gderror_to_string()
 	print('Result 3 (should fail) = ', res3)
 
 
@@ -347,14 +347,12 @@ func example_custom_errors():
 		push_warning("Failed to greet user: ", res2.unwrap_unchecked())
 	
 	# 4. The tryhard
-	var res3: Result = Result.Err(GreetError.NO_NAME)\
-		.as_report(func(r: Report):
-			return r.msg("Failed to greet user")\
-				.cause( error_string(ERR_CANT_CONNECT) )
-			)\
-		.report(Report.LogLevel.WARNING)
-		# See what happens if log level is CRASH instead
-		# .report(Report.LogLevel.CRASH)
+	var res3: Result = Result.Err(GreetError.NO_NAME) .as_report(func(r: Report):
+		r.msg("Failed to greet user")\
+			.report(Report.LogLevel.WARNING)
+			# See what happens if log level is CRASH instead
+			# .report(Report.LogLevel.CRASH)
+		)
 
 #endregion Using Results
 
