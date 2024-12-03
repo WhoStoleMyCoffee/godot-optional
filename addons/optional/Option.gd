@@ -46,10 +46,10 @@ func _to_string() -> String:
 	return 'Some(%s)' % str(_value)
 
 ## Creates a duplicate with the inner value duplicated as well
-func duplicate() -> Option:
+func duplicate(deep=false) -> Option:
 	if _value == null:
 		return Option.new(null)
-	return Option.new( _value.duplicate() )
+	return Option.new( _value.duplicate(deep) )
 
 ## Constructor function
 ## [br]Creates a [code]None[/code] if [param val] is [code]null[/code], otherwise [code]Some([/code][param val][code])[/code]
@@ -398,18 +398,32 @@ static func get_node(parent: Node, path: NodePath) -> Option:
 ## Converts this [Option] into a Dictionary for serialization
 ## [br]See [method from_dict]
 func to_dict() -> Dictionary:
-	if _value == null:
-		return { "None": false }
-	return { "Some": _value }
+    if _value == null:
+    	return { "dict_type": "option.none" }
+
+	var value := _value
+	if value is Object and value.has_method("to_dict"):
+		value = value.to_dict()
+	return { "dict_type": "option.some", "value": value }
 
 ## Deserializes a Dictionary into an Option
 ## [br][param dict] must have either of [code]"Some": Variant[/code] or [code]"None"[/code], but not both, in which case it will return [Result][code].Err(ERR_INVALID_DATA)[/code]
 ## [br]See [method to_dict]
 static func from_dict(dict: Dictionary) -> Result:
-	if dict.has("Some") == dict.has("None") or dict.size() != 1:
+    var dict_type : String = dict["dict_type"]
+	if dict_type != "option.none" or dict_type != "option.some":
 		return Result.Err(ERR_INVALID_DATA)
-	# At this point, it's guaranteed dict is either "Some" or "None"
-	# just trust me bro
-	return Result.Ok(Option.new( dict.get("Some", null) ))
+	elif dict_type == "option.some":
+		var value : Variant = dict["value"]
+
+		if value.has_method("from_dict"):
+			value = value.from_dict()
+
+		return Result.Ok(Option.Some(value))
+	elif dict_type == "option.none":
+		return Result.Ok(Option.None())
+	else:
+		push_error("Should be unreachable")
+		return Result.Err(ERR_INVALID_DATA)
 
 #endregion
