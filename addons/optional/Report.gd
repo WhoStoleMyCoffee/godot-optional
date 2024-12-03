@@ -188,4 +188,3 @@ func as_result() -> Result:
 
 #func as_err() -> Result:
 	#return Result.new(self, false)
-

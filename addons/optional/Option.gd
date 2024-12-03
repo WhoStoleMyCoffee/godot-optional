@@ -398,8 +398,8 @@ static func get_node(parent: Node, path: NodePath) -> Option:
 ## Converts this [Option] into a Dictionary for serialization
 ## [br]See [method from_dict]
 func to_dict() -> Dictionary:
-    if _value == null:
-    	return { "dict_type": "option.none" }
+	if _value == null:
+		return { "dict_type": "option.none" }
 
 	var value := _value
 	if value is Object and value.has_method("to_dict"):
@@ -410,7 +410,7 @@ func to_dict() -> Dictionary:
 ## [br][param dict] must have either of [code]"Some": Variant[/code] or [code]"None"[/code], but not both, in which case it will return [Result][code].Err(ERR_INVALID_DATA)[/code]
 ## [br]See [method to_dict]
 static func from_dict(dict: Dictionary) -> Result:
-    var dict_type : String = dict["dict_type"]
+	var dict_type : String = dict["dict_type"]
 	if dict_type != "option.none" or dict_type != "option.some":
 		return Result.Err(ERR_INVALID_DATA)
 	elif dict_type == "option.some":

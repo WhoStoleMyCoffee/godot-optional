@@ -318,4 +318,3 @@ func is_expired() -> bool:
 ## [br]See [method is_expired] instead
 func is_expired_unchecked() -> bool:
 	return _is_expired
-
